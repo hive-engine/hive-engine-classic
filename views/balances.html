@@ -91,7 +91,7 @@
 		const token = SE.Tokens.find(t => t.symbol == d.symbol);
         let availableStake = d.stake;
         let lockedStake = 0;
-        if (token.stakingEnabled) {
+        if (token.stakingEnabled && SE.User.pendingUnstakes) {
           lockedStake = SE.User.pendingUnstakes.filter(unstake => unstake.symbol === d.symbol && unstake.numberTransactionsLeft > 1).map(unstake => parseFloat(unstake.quantityLeft) - parseFloat((parseFloat(unstake.quantity) / token.numberTransactions).toFixedNoRounding(token.precision))).reduce((x,y) => x+y, 0);
           availableStake = Math.max(0, parseFloat(availableStake) - lockedStake).toFixed(token.precision);
         }
