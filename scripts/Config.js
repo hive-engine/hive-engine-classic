@@ -13,7 +13,7 @@ Config = {
     PEGGED_TOKEN: 'SWAP.HIVE',
     MIN_WITHDRAW: [{
         symbol: 'BTC',
-        amount: 0.001
+        amount: 0.01
     },
     {
         symbol: 'LTC',
