@@ -11,6 +11,14 @@ Config = {
     STEEMP_ACCOUNT: 'honey-swap',
     DISABLED_TOKENS: ['BTC', 'LTC', 'STEEM', 'SBD', 'HIVE', 'HBD', 'BCC', 'XAP', 'XRP', 'GOLOS', 'DISNEY', 'AMAZON', 'VOICE', 'ETH', 'EOS', 'DONE', 'BNB', 'LASSE', 'R', 'SCTR', 'ALLAH', 'ETHER', 'LTCPEG', 'SBC', 'TEST.EON', 'BEEHIVE', 'BEECASH', 'SPL.FUND', 'ATOM.TOKEN', 'DSWAP', 'LEOG', 'PAK', 'APXM', 'LBIM', 'BROAG', 'LEGEND'],
     PEGGED_TOKEN: 'SWAP.HIVE',
+    MIN_WITHDRAW: [{
+        symbol: 'BTC',
+        amount: 0.001
+    },
+    {
+        symbol: 'LTC',
+        amount: 0.00001
+    }],
     PEGGED_TOKENS: [{
             name: 'Hive',
             symbol: 'HIVE',
