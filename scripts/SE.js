@@ -3,6 +3,8 @@ SE = {
     Params: {},
     Tokens: [],
     ScotTokens: {},
+    Settings: {},
+    web3: {},
 
     Api: function(url, data, callback, always) {
         if (data == null || data == undefined) data = {};
@@ -1815,5 +1817,133 @@ SE = {
                     callback(null, Object.assign(result, pegged_token));
             }
         });
+    },
+
+    fetchEthAddress: function (callback) {
+        try {
+            if (!this.Settings || !this.Settings.eth_bridge)
+                this.fetchSettings();
+
+            var pegged_token = Config.PEGGED_TOKENS.find(p => p.symbol == 'ETH');
+
+            if (!pegged_token)
+                return;
+
+            $.ajax({
+                url: Config.ETH_BRIDGE_API + '/utils/ethaddress/' + SE.User.name,
+                type: 'GET',
+                contentType: "application/json",
+                dataType: "json",
+                success: result => {
+                    if (callback)
+                        callback(null, result);
+                },
+                error: (xhr, status, errorThrown) => {
+                    if (callback) {
+                        callback(xhr, null);
+                    }
+                }
+            });            
+        } catch (e) {
+            console.log(e.message)
+        }
+    },
+
+    addUpdateEthAddress: async function (ethAddress, callback) {
+        if (!this.Settings || !this.Settings.eth_bridge)
+            this.fetchSettings();
+
+        let isValidEthAddr = SE.web3.utils.isAddress(ethAddress);
+        if (isValidEthAddr) {
+            try {                
+                const accounts = await ethereum.request({ method: 'eth_accounts' });               
+                console.log(accounts);
+                console.log(ethAddress);
+                // approve access first
+                if (!accounts.find(x => x === ethAddress)) {
+                    console.log('not found');
+                    try {
+                        await window.ethereum.request({ method: 'eth_requestAccounts' })
+                    } catch (e) {
+                        console.log(e)
+                    }
+                } else {
+                    console.log('found');
+                    web3.eth.defaultAccount = ethAddress;
+                    data = SE.web3.utils.fromUtf8(SE.User.name);
+                    let ethSig = await window.ethereum.request({
+                        method: 'personal_sign',
+                        params: [data, ethAddress]
+                    });
+                    
+                    const memo = JSON.stringify({
+                        id: this.Settings.eth_bridge.id,
+                        json: {
+                            ethereumAddress: ethAddress,
+                            signature: ethSig
+                        }
+                    })
+
+                    hive_keychain.requestTransfer(SE.User.name, this.Settings.eth_bridge.account, 0.001, memo, 'HIVE', function (response) {
+                        console.log(response);
+                        if (response.success && response.result) {
+                            SE.ShowToast(true, 'Transaction sent successfully.');
+                        } else {
+                            SE.ShowToast(false, 'An error occurred while updating ETH address: ' + tx.error);
+                        }
+                    });
+                }
+
+            } catch (e) {
+                console.log(e.message)
+            }
+        }
+    },
+
+    fetchSettings: function () {
+        //console.log('fetch settings');
+        //console.log(window.web3);
+        //if ((!window.web3 || !window.web3.utils) && window.ethereum && window.web3) {
+        //    window.web3 = new window.web3(window.ethereum)
+        //}
+
+        $.ajax({
+            url: Config.SETTINGS_API + '/settings',
+            type: 'GET',
+            contentType: "application/json",
+            dataType: "json",
+            success: result => {
+                this.Settings = result;
+            },
+            error: (xhr, status, errorThrown) => {
+                console.log(xhr);
+            }
+        });     
+    },
+
+    depositEth: async function (ethAddress, ethAmount) {
+        if (!this.Settings || !this.Settings.eth_bridge)
+            this.fetchSettings();
+
+        try {            
+            let depositAddress = this.Settings.eth_bridge.gateway_address;
+            let ethVal = SE.web3.utils.toHex(SE.web3.utils.toWei(ethAmount.toString(), 'ether'));
+
+            const transactionHash = await ethereum.request({
+                method: 'eth_sendTransaction',
+                params: [
+                    {
+                        to: depositAddress,
+                        from: ethAddress,
+                        value: ethVal
+                    },
+                ],
+            });
+
+            console.log(transactionHash);
+            SE.ShowToast(true, 'Deposit initiated.');
+        } catch (e) {
+            console.log(e.message)
+        }
     }
 }
