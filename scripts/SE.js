@@ -5,6 +5,7 @@ SE = {
     ScotTokens: {},
     Settings: {},
     web3: {},
+    EthWithdrawalFee: 0,
 
     Api: function(url, data, callback, always) {
         if (data == null || data == undefined) data = {};
@@ -1889,7 +1890,7 @@ SE = {
                         if (response.success && response.result) {
                             SE.ShowToast(true, 'Transaction sent successfully.');
                         } else {
-                            SE.ShowToast(false, 'An error occurred while updating ETH address: ' + tx.error);
+                            SE.ShowToast(false, 'An error occurred while updating ETH address');
                         }
                     });
                 }
@@ -1901,12 +1902,6 @@ SE = {
     },
 
     fetchSettings: function () {
-        //console.log('fetch settings');
-        //console.log(window.web3);
-        //if ((!window.web3 || !window.web3.utils) && window.ethereum && window.web3) {
-        //    window.web3 = new window.web3(window.ethereum)
-        //}
-
         $.ajax({
             url: Config.SETTINGS_API + '/settings',
             type: 'GET',
@@ -1945,5 +1940,25 @@ SE = {
         } catch (e) {
             console.log(e.message)
         }
+    },
+
+    getEthWithdrawalFee: function (callback) {
+        $.ajax({
+            url: Config.ETH_BRIDGE_API + '/utils/withdrawalfee',
+            type: 'GET',
+            contentType: "application/json",
+            dataType: "json",
+            success: result => {
+                if (callback)
+                    callback(null, result);
+            },
+            error: (xhr, status, errorThrown) => {
+                callback(xhr, null);
+            }
+        });  
+    },
+
+    WithdrawEth: function (symbol, amount, address, callback) {
+        SE.SendToken('SWAP.' + symbol, this.Settings.eth_bridge.account, amount, address);
     }
 }
