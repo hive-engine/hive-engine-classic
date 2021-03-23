@@ -7,6 +7,8 @@ Config = {
     SCOT_API: 'https://scot-api.steem-engine.com/',
     NODE_API: 'https://node-api.hive-engine.com/v1/',
     HISTORY_API: 'https://accounts.hive-engine.com/',
+    ETH_BRIDGE_API: 'https://ethgw.hive-engine.com/api',
+    SETTINGS_API: 'https://tribaldex.com/api',
     NATIVE_TOKEN: 'BEE',
     STEEMP_ACCOUNT: 'honey-swap',
     DISABLED_TOKENS: ['BTC', 'LTC', 'STEEM', 'SBD', 'BCC', 'XAP', 'XRP', 'GOLOS', 'DISNEY', 'AMAZON', 'VOICE', 'ETH', 'EOS', 'TIME', 'DONE', 'BNB'],

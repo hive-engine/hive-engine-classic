@@ -1,0 +1,125 @@
+﻿
+<div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content blue">
+        <div class="modal-header" style="padding: 40px 40px 10px 60px;">
+            <h1 class="modal-title" style="font-size: 38px;">
+                DEPOSIT ETH
+                <div class="note">There is a 1% fee on deposits and withdrawals.<br />Ethereum deposits have no deposit fees.<br />If you've added/updated your ETH address, it may take a while your balance is updated. Please revisit this page or refresh.</div>
+            </h1>
+
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">X</span>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="note" style="text-align: left; margin-bottom: 20px;">
+
+            </div>
+
+            <label>Your ETH Address</label>
+            <div class="input-group justify-content-center align-items-center" id="ethAddrDiv">
+                <input type="text" id="deposit_eth_address" value="<%= data && data.ethereumAddress ? data.ethereumAddress : '' %>" />
+                <button id="fetchEthAddr" class="btn btn-info"><i class="fas fa-sync"></i></button>
+                <button id="addUpdateEthAddr" class="btn btn-primary">Add/Update</button>
+                <div class="invalid-tooltip">
+                    Please enter an ETH address
+                </div>
+            </div>
+            
+
+            <label class="mb-0">Current ETH Balance</label>
+            <p class="mb-4">
+                <%= data && data.balance ? data.balance : 0 %>
+            </p>
+
+            <label>DEPOSIT AMOUNT</label>
+            <div class="input-group justify-content-center align-items-center">
+                <input type="text" placeholder="0.000" id="deposit_amount">
+                <div class="input-group-append">
+                    ETH
+                </div>
+                <div class="invalid-tooltip">
+                    Please enter a valid amount
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="padding-bottom: 0;">
+            <button id="btnDepositEth" type="button" class="btn btn-primary btn-lg w-100" aria-label="Deposit">Deposit Now</button>
+        </div>
+
+        <div class="privex">
+            <a href="https://pay.privex.io/order/?r=steem-engine" target="_blank">
+                <img src="https://www.privex.io/static/assets/svg/privex_ctc_api_light.svg" />
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#fetchEthAddr").on("click", fetchEthAddr);
+    $("#addUpdateEthAddr").on("click", addUpdateEthAddr);
+    $("#ethAddrDiv .invalid-tooltip").on("click", function () { $('#deposit_eth_address').removeClass("is-invalid"); });
+    $("#btnDepositEth").on("click", depositEth);
+
+    function fetchEthAddr() {
+        SE.ShowLoading();
+        SE.fetchEthAddress((err, result) => {
+            processFetchEth(err, result);
+        });
+    }
+
+    async function processFetchEth(err, result) {
+        if (result && result.status == "success" && result.data.ethereumAddress) {
+            if (result.data.ethereumAddress.length === 42) {
+                let wei = await window.ethereum.request({ method: 'eth_getBalance', params: [model.ethereumAddress] });
+                //await SE.Web3.eth.getBalance(result.data.ethereumAddress);
+                let legacyWeb3 = new Web3(window.web3.currentProvider);
+                model.balance = legacyWeb3.utils.fromWei(wei);
+            }
+        }
+
+        if (result && result.ethereumAddress) {
+            if (ethToken.ethereumAddress.length === 42) {
+                result.balance = SE.Web3.utils.fromWei(await SE.Web3.eth.getBalance(result.ethereumAddress));
+            }
+        }
+
+        if (!result && err) {
+            $('#deposit_eth_address').addClass("is-invalid");
+        }
+
+        SE.HideLoading();
+    }
+
+    function addUpdateEthAddr() {
+        let addr = $('#deposit_eth_address').val();
+        if (addr == "") {
+            $('#deposit_eth_address').addClass("is-invalid");
+        } else {
+            //SE.ShowLoading();
+            SE.addUpdateEthAddress(addr.toLowerCase(), (err, result) => {
+                
+            });
+        }        
+    }
+
+    function depositEth() {
+        SE.ShowLoading();
+        let amount = $("#deposit_amount").val();
+        let addr = $('#deposit_eth_address').val();
+
+        if (isNaN(amount) || amount == 0 || amount > '<%=data.balance%>' || amount < 0.001) {
+            $('#deposit_amount').addClass("is-invalid");
+            SE.HideLoading();
+        } else if (addr == "") {
+            $('#deposit_eth_address').addClass("is-invalid");
+            SE.HideLoading();
+        } else {
+            SE.depositEth(addr.toLowerCase(), amount);
+            SE.HideLoading();
+        }
+    }
+</script>
+

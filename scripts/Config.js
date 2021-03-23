@@ -7,6 +7,8 @@ Config = {
     SCOT_API: 'https://scot-api.steem-engine.com/',
     NODE_API: 'https://node-api.hive-engine.com/v1/',
     HISTORY_API: 'https://accounts.hive-engine.com/',
+    ETH_BRIDGE_API: 'https://ethgw.hive-engine.com/api',
+    SETTINGS_API: 'https://tribaldex.com/api',
     NATIVE_TOKEN: 'BEE',
     STEEMP_ACCOUNT: 'honey-swap',
     DISABLED_TOKENS: ['BTC', 'LTC', 'STEEM', 'SBD', 'HIVE', 'HBD', 'BCC', 'XAP', 'XRP', 'GOLOS', 'DISNEY', 'AMAZON', 'VOICE', 'ETH', 'EOS', 'DONE', 'BNB', 'LASSE', 'R', 'SCTR', 'ALLAH', 'ETHER', 'LTCPEG', 'SBC', 'TEST.EON', 'BEEHIVE', 'BEECASH', 'SPL.FUND', 'ATOM.TOKEN', 'DSWAP', 'LEOG', 'PAK', 'APXM', 'LBIM', 'BROAG', 'LEGEND', 'COIN.HONEY'],
@@ -18,7 +20,11 @@ Config = {
     {
         symbol: 'LTC',
         amount: 0.00001
-    }],
+        },
+        {
+            symbol: 'ETH',
+            amount: 0.001
+        }],
     PEGGED_TOKENS: [{
             name: 'Hive',
             symbol: 'HIVE',
@@ -48,6 +54,11 @@ Config = {
             name: 'Litecoin',
             symbol: 'LTC',
             pegged_token_symbol: 'SWAP.LTC'
+        },
+        {
+            name: 'Ethereum',
+            symbol: 'ETH',
+            pegged_token_symbol: 'SWAP.ETH'
         },
         {
             name: 'EOS',

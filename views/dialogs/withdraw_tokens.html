@@ -3,7 +3,7 @@
         <div class="modal-header" style="padding: 40px 40px 10px 60px;">
             <h1 class="modal-title" style="font-size: 35px;">
                 WITHDRAW TOKENS
-                <div class="note">There is a 1% fee on deposits and withdrawals.</div>
+                <div class="note">There is a 1% fee on deposits and withdrawals.<br />For Ethereum you will pay for the Gas.</div>
             </h1>
 
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -74,6 +74,9 @@
 </div>
 
 <script>
+    if (!SE.Settings.eth_bridge)
+        SE.fetchSettings();
+
     function onWithdrawClick() {
         var token = Config.PEGGED_TOKENS.find(p => p.symbol == $('#withdrawal_token').val());
 
@@ -97,17 +100,29 @@
                         SE.WithdrawSteem(amount);
                     else {
                         $('#error_response').text('');
-                        SE.GetWithdrawalAddress(token.symbol, $('#withdraw_address').val(), $("#memo").val(), (err, result) => {
-                            if (err) {
-                                $('#withdraw_address').addClass('is-invalid');
-                                $('#error_response').text(err.responseJSON.message);
-                                return;
+
+                        if (token.symbol == SE.Settings.eth_bridge.ethereum.pegged_token_symbol.replace('SWAP.', '')) {
+                            if ($('#receive_amt').text() < 0) {
+                                $('#withdraw_amount').addClass("is-invalid");
+                            } else {
+                                SE.WithdrawEth(token.symbol, $('#withdraw_amount').val(), $('#withdraw_address').val(), (err, result) => {
+                                    console.log(result);
+                                });
                             }
 
-                            if (result && result.memo) {
-                                SE.SendToken(token.pegged_token_symbol, result.account, amount, result.memo);
-                            }
-                        });
+                        } else {
+                            SE.GetWithdrawalAddress(token.symbol, $('#withdraw_address').val(), $("#memo").val(), (err, result) => {
+                                if (err) {
+                                    $('#withdraw_address').addClass('is-invalid');
+                                    $('#error_response').text(err.responseJSON.message);
+                                    return;
+                                }
+
+                                if (result && result.memo) {
+                                    SE.SendToken(token.pegged_token_symbol, result.account, amount, result.memo);
+                                }
+                            });
+                        }
                     }
                 }
             }
@@ -124,11 +139,16 @@
 
     $('#withdraw_amount').keyup(() => {
         var amt = parseFloat($('#withdraw_amount').val());
-
+        var tokenWith = $('#withdrawal_token').val();
         if (isNaN(amt))
             amt = 0;
 
-        $('#receive_amt').text((amt * 0.99).toFixed($('#withdrawal_token').val() == 'HIVE' ? 3 : 8));
+        let recvAmt = (amt * 0.99).toFixed(tokenWith == 'HIVE' ? 3 : 8);
+        if (amt > 0 && tokenWith === SE.Settings.eth_bridge.ethereum.pegged_token_symbol.replace('SWAP.','')) {
+            recvAmt = ((amt * 0.99) - SE.EthWithdrawalFee).toFixed(8)
+        }
+
+        $('#receive_amt').text(recvAmt);
     });
 
     $('#withdrawal_token').change(updateToken);
@@ -162,6 +182,12 @@
 
         $('#withdraw_address').prop('disabled', token.symbol == 'HIVE');
         $('#withdraw_address').val((token.symbol == 'HIVE') ? SE.User.name : '');
+                
+        if (token.symbol == SE.Settings.eth_bridge.ethereum.pegged_token_symbol.replace('SWAP.', '')) {            
+            SE.getEthWithdrawalFee((err, result) => {
+                SE.EthWithdrawalFee = Number(result.data);
+            });
+        }
     }
 
     if ('<%= data && data.symbol ? data.symbol : "" %>' != '') {

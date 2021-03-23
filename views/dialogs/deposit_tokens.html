@@ -3,7 +3,7 @@
         <div class="modal-header" style="padding: 40px 40px 10px 60px;">
             <h1 class="modal-title" style="font-size: 38px;">
                 DEPOSIT TOKENS
-                <div class="note">There is a 1% fee on deposits and withdrawals.</div>
+                <div class="note">There is a 1% fee on deposits and withdrawals.<br />Ethereum deposits have no deposit fees.</div>
             </h1>
 
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -39,29 +39,65 @@
 </div>
 
 <script type="text/javascript">
-    function getDepositInfoClick() {
-        if ($('#deposit_token').val() == 'HIVE') {
+    async function getDepositInfoClick() {
+        let selectedTokenVal = $('#deposit_token').val();
+
+        if (selectedTokenVal == 'HIVE') {
             SE.ShowDialog('deposit_steem');
             return;
         }
 
         SE.ShowLoading();
 
-        SE.GetDepositAddress($('#deposit_token').val(), result => {
-            SE.HideLoading();
-
-            if (result && result.address) {
-                SE.ShowDialog('deposit_info', result);
-                return;
+        if (selectedTokenVal === 'ETH') {
+            if (window.ethereum && window.Web3) {
+                SE.web3 = new window.Web3(window.ethereum)
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' })
+                } catch (e) {
+                    console.log(e)
+                }
             }
+            let ethToken = "";
 
-            if (result && result.memo) {
-                SE.ShowDialog('deposit_info', result);
-                return;
-            }
-        });
+            SE.fetchEthAddress((err, result) => {
+                showEthDeposit(err, result);                
+            });
+        } else {
+
+            SE.GetDepositAddress($('#deposit_token').val(), result => {
+                SE.HideLoading();
+
+                if (result && result.address) {
+                    SE.ShowDialog('deposit_info', result);
+                    return;
+                }
+
+                if (result && result.memo) {
+                    SE.ShowDialog('deposit_info', result);
+                    return;
+                }
+            });
+        }
     }
 
     if ('<%= data && data.symbol ? data.symbol : "" %>' != '')
         $('#deposit_token').val('<%= data && data.symbol ? data.symbol : "" %>');
+
+    async function showEthDeposit(err, result) {
+        let model = { balance: 0, ethereumAddress: "" };
+        if (result && result.status == "success" && result.data.ethereumAddress) {
+            model.ethereumAddress = result.data.ethereumAddress;
+
+            if (result.data.ethereumAddress.length === 42) {
+                let wei = await window.ethereum.request({ method: 'eth_getBalance', params: [model.ethereumAddress] });
+                //await SE.Web3.eth.getBalance(result.data.ethereumAddress);
+                let legacyWeb3 = new Web3(window.web3.currentProvider);
+                model.balance = legacyWeb3.utils.fromWei(wei);
+            }
+        }
+        
+        SE.ShowDialog('deposit_eth', model);        
+        SE.HideLoading();
+    }
 </script>
