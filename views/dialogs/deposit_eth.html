@@ -29,7 +29,7 @@
             
 
             <label class="mb-0">Current ETH Balance</label>
-            <p class="mb-4">
+            <p class="mb-4" id="eth_balance">
                 <%= data && data.balance ? data.balance : 0 %>
             </p>
 
@@ -76,13 +76,8 @@
                 let wei = await window.ethereum.request({ method: 'eth_getBalance', params: [result.data.ethereumAddress] });
                 //await SE.Web3.eth.getBalance(result.data.ethereumAddress);
                 let legacyWeb3 = new Web3(window.web3.currentProvider);
-                model.balance = legacyWeb3.utils.fromWei(wei);
-            }
-        }
-
-        if (result && result.ethereumAddress) {
-            if (ethToken.ethereumAddress.length === 42) {
-                result.balance = SE.Web3.utils.fromWei(await SE.Web3.eth.getBalance(result.ethereumAddress));
+                result.balance = legacyWeb3.utils.fromWei(wei);
+                $("#eth_balance").text(result.balance);
             }
         }
 
