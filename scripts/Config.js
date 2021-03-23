@@ -4,7 +4,7 @@ Config = {
     RPC_URL: 'https://api.hive-engine.com/rpc',
     ACCOUNTS_API_URL: 'https://accounts.hive-engine.com/accountHistory',
     CONVERTER_API: 'https://converter-api.hive-engine.com/api',
-    SCOT_API: 'https://scot-api.steem-engine.com/',
+    SCOT_API: 'https://scot-api.steem-engine.net/',
     NODE_API: 'https://node-api.hive-engine.com/v1/',
     HISTORY_API: 'https://accounts.hive-engine.com/',
     ETH_BRIDGE_API: 'https://ethgw.hive-engine.com/api',
