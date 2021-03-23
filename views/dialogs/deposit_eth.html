@@ -73,7 +73,7 @@
     async function processFetchEth(err, result) {
         if (result && result.status == "success" && result.data.ethereumAddress) {
             if (result.data.ethereumAddress.length === 42) {
-                let wei = await window.ethereum.request({ method: 'eth_getBalance', params: [model.ethereumAddress] });
+                let wei = await window.ethereum.request({ method: 'eth_getBalance', params: [result.data.ethereumAddress] });
                 //await SE.Web3.eth.getBalance(result.data.ethereumAddress);
                 let legacyWeb3 = new Web3(window.web3.currentProvider);
                 model.balance = legacyWeb3.utils.fromWei(wei);
