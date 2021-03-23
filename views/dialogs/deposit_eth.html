@@ -4,7 +4,7 @@
         <div class="modal-header" style="padding: 40px 40px 10px 60px;">
             <h1 class="modal-title" style="font-size: 38px;">
                 DEPOSIT ETH
-                <div class="note">There is a 1% fee on deposits and withdrawals.<br />Ethereum deposits have no deposit fees.</div>
+                <div class="note">There is a 1% fee on deposits and withdrawals.<br />Ethereum deposits have no deposit fees.<br />If you've added/updated your ETH address, it may take a while your balance is updated. Please revisit this page or refresh.</div>
             </h1>
 
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -109,7 +109,6 @@
         SE.ShowLoading();
         let amount = $("#deposit_amount").val();
         let addr = $('#deposit_eth_address').val();
-        console.log('<%=data.balance%>');
 
         if (isNaN(amount) || amount == 0 || amount > '<%=data.balance%>' || amount < 0.001) {
             $('#deposit_amount').addClass("is-invalid");

@@ -1857,19 +1857,15 @@ SE = {
         let isValidEthAddr = SE.web3.utils.isAddress(ethAddress);
         if (isValidEthAddr) {
             try {                
-                const accounts = await ethereum.request({ method: 'eth_accounts' });               
-                console.log(accounts);
-                console.log(ethAddress);
+                const accounts = await ethereum.request({ method: 'eth_accounts' });
                 // approve access first
                 if (!accounts.find(x => x === ethAddress)) {
-                    console.log('not found');
                     try {
                         await window.ethereum.request({ method: 'eth_requestAccounts' })
                     } catch (e) {
                         console.log(e)
                     }
                 } else {
-                    console.log('found');
                     web3.eth.defaultAccount = ethAddress;
                     data = SE.web3.utils.fromUtf8(SE.User.name);
                     let ethSig = await window.ethereum.request({
