@@ -49,7 +49,7 @@
 
         SE.ShowLoading();
 
-        if (selectedTokenVal === 'ETH') {
+        if (selectedTokenVal === 'ETH' || selectedTokenVal == 'ERC20') {
             if (window.ethereum && window.Web3) {
                 SE.web3 = new window.Web3(window.ethereum)
                 try {
@@ -58,10 +58,9 @@
                     console.log(e)
                 }
             }
-            let ethToken = "";
 
             SE.fetchEthAddress((err, result) => {
-                showEthDeposit(err, result);                
+                showEthDeposit(err, result, selectedTokenVal);                
             });
         } else {
 
@@ -84,7 +83,7 @@
     if ('<%= data && data.symbol ? data.symbol : "" %>' != '')
         $('#deposit_token').val('<%= data && data.symbol ? data.symbol : "" %>');
 
-    async function showEthDeposit(err, result) {
+    async function showEthDeposit(err, result, selectedTokenVal) {
         let model = { balance: 0, ethereumAddress: "" };
         if (result && result.status == "success" && result.data.ethereumAddress) {
             model.ethereumAddress = result.data.ethereumAddress;
@@ -96,8 +95,12 @@
                 model.balance = legacyWeb3.utils.fromWei(wei);
             }
         }
-        
-        SE.ShowDialog('deposit_eth', model);        
+        console.log(selectedTokenVal);
+        if (selectedTokenVal == 'ETH')
+            SE.ShowDialog('deposit_eth', model);
+        else if (selectedTokenVal == 'ERC20')
+            SE.ShowDialog('deposit_erc20', model);
+
         SE.HideLoading();
     }
 </script>

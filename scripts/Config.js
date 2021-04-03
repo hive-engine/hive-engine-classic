@@ -61,6 +61,11 @@ Config = {
             pegged_token_symbol: 'SWAP.ETH'
         },
         {
+            name: 'ERC20 Tokens',
+            symbol: 'ERC20',
+            pegged_token_symbol: 'SWAP.ERC20'
+        },
+        {
             name: 'EOS',
             symbol: 'EOS',
             pegged_token_symbol: 'SWAP.EOS'

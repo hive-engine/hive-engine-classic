@@ -6,6 +6,28 @@ SE = {
     Settings: {},
     web3: {},
     EthWithdrawalFee: 0,
+    ABI: [{
+        constant: true,
+        inputs: [{ name: '_owner', type: 'address' }],
+        name: 'balanceOf',
+        outputs: [{ name: 'balance', type: 'uint256' }],
+        type: 'function'
+    }, {
+        constant: true,
+        inputs: [],
+        name: 'decimals',
+        outputs: [{ name: '', type: 'uint8' }],
+        type: 'function'
+    }, {
+        constant: false,
+        inputs: [{ name: '_to', type: 'address' }, { name: '_value', type: 'uint256' }],
+        name: 'transfer',
+        outputs: [{ name: '', type: 'bool' }
+        ],
+        type: 'function'
+    }],
+    ERC20Tokens: [],
+    EthFeeBalance: 0,
 
     Api: function(url, data, callback, always) {
         if (data == null || data == undefined) data = {};
@@ -1955,6 +1977,111 @@ SE = {
     },
 
     WithdrawEth: function (symbol, amount, address, callback) {
-        SE.SendToken('SWAP.' + symbol, this.Settings.eth_bridge.account, amount, address);
-    }
+        SE.SendToken(symbol, this.Settings.eth_bridge.account, amount, address);
+    },
+
+    fetchSupportedERC20s: function (deposit, withdrawal, callback) {
+        try {
+            $.ajax({
+                url: Config.ETH_BRIDGE_API + '/utils/tokens/erc20',
+                type: 'GET',
+                contentType: "application/json",
+                dataType: "json",
+                success: result => {
+                    const tokens = result.data.filter((t) => {
+                        if (typeof deposit === 'boolean') {
+                            return t.depositEnabled === deposit
+                        }
+
+                        return t.withdrawEnabled === withdrawal
+                    })
+                    .map((t) => {
+                        return {
+                            name: t.name,
+                            symbol: t.ethSymbol,
+                            pegged_token_symbol: t.heSymbol,
+                            contract_address: t.contractAddress,
+                            he_precision: t.hePrecision,
+                            eth_precision: t.ethPrecision
+                        }
+                    });
+
+                    this.ERC20Tokens = tokens;
+
+                    if (callback)
+                        callback(null, tokens);
+                    //console.log(tokens);
+                    //return tokens;
+                },
+                error: (xhr, status, errorThrown) => {
+                    callback(xhr, null);
+                }
+            });              
+        } catch (e) {
+            console.log(e.message)
+        }
+    },
+
+    getERC20Balance: async function(contractAddress, walletAddress) {
+        if (!walletAddress || !contractAddress) {
+            return 0
+        }
+
+        let legacyWeb3 = new Web3(window.web3.currentProvider);
+        const contract = new legacyWeb3.eth.Contract(SE.ABI, contractAddress)
+
+        const [balance, decimals] = await Promise.all([
+            contract.methods.balanceOf(walletAddress).call(),
+            contract.methods.decimals().call()
+        ])
+
+        return Number(balance) / 10 ** decimals
+    },
+    depositERC20: async function (ethAddress, ethAmount, erc20Symbol) {
+        if (!this.Settings || !this.Settings.eth_bridge)
+            this.fetchSettings();
+
+        try {
+            let depositAddress = this.Settings.eth_bridge.gateway_address;
+            this.loading = true
+
+            const symbol = SE.ERC20Tokens.find(t => t.symbol === erc20Symbol)
+
+            let legacyWeb3 = new Web3(window.web3.currentProvider);
+            const contract = new legacyWeb3.eth.Contract(SE.ABI, symbol.contract_address)
+
+            const value = window.Decimal(ethAmount * 10 ** symbol.eth_precision).toFixed();            
+
+            await contract.methods.transfer(depositAddress, value).send({ from: ethAddress });
+            
+            SE.ShowToast(true, 'Deposit initiated.');
+        } catch (e) {
+            console.log(e.message)
+        }
+    },
+    fetchFeeBalance: function(callback) {
+        try {
+            $.ajax({
+                url: Config.ETH_BRIDGE_API + '/utils/feebalance/' + SE.User.name,
+                type: 'GET',
+                contentType: "application/json",
+                dataType: "json",
+                success: result => {
+                    SE.EthFeeBalance = Number(result.data.balance);
+
+                    if (callback)
+                        callback(null, SE.EthFeeBalance);
+                },
+                error: (xhr, status, errorThrown) => {
+                    console.log(xhr);
+                    //callback(xhr, null);
+                }
+            });  
+        } catch (e) {
+            console.log(e)
+        }
+    },
+    DepositGas: async function (amount) {
+        SE.SendToken(this.Settings.eth_bridge.ethereum.pegged_token_symbol, this.Settings.eth_bridge.account, amount, 'fee');
+    },
 }
