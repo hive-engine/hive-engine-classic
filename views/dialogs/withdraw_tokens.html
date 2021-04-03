@@ -3,12 +3,12 @@
         <div class="modal-header" style="padding: 40px 40px 10px 60px;">
             <h1 class="modal-title" style="font-size: 35px;">
                 WITHDRAW TOKENS
-                <div class="note">There is a 1% fee on deposits and withdrawals.<br />For Ethereum you will pay for the Gas.</div>
+                <div class="note">There is a 1% fee on deposits and withdrawals.<br />For Ethereum and ERC20 withdrawals you will pay for the Ethereum network gas fee.</div>
             </h1>
 
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">X</span>
-				</button>
+                <span aria-hidden="true">X</span>
+            </button>
         </div>
 
         <div class="modal-body">
@@ -29,15 +29,27 @@
                 </select>
             </div>
 
-            <label class="mb-0">Current Balance</label>
-            <p id="withdraw_balance" class="mb-4">
-                <%= addCommas(SE.GetBalance('SWAP.HIVE')) + ' SWAP.HIVE' %>
-            </p>
+            <div id="nonErc20Balance">
+                <label class="mb-0">Current Balance</label>
+                <p id="withdraw_balance" class="mb-4">
+                    <%= addCommas(SE.GetBalance('SWAP.HIVE')) + ' SWAP.HIVE' %>
+                </p>
+            </div>
+
+            <div id="erc20div" style="display: none;">
+                <label>ERC20 Token </label>
+                <div class="input-group" id="erc20AddrDiv">
+                    <select name="erc20Token" id="erc20Token"></select>
+                </div>
+                <br />
+                <label class="mb-0">Current <span id="peggedTokenSymbol">ERC20</span> Balance</label>
+                <p class="mb-4" id="erc20_balance">0.00</p>
+            </div>
 
             <label>WITHDRAW AMOUNT</label>
             <div class="input-group justify-content-center align-items-center">
                 <input type="text" placeholder="0.000" id="withdraw_amount">
-                <div class="input-group-append pts">
+                <div class="input-group-append pts" id="withAppend">
                     SWAP.HIVE
                 </div>
                 <div class="invalid-tooltip">
@@ -54,16 +66,39 @@
             </div>
             <div class="ssc-cost">Please ensure this address is correct.<br />We cannot refund incorrect withdrawals.</div>
 
-            <label>MEMO</label>
-            <div class="input-group justify-content-center align-items-center">
-                <input type="text" id="memo" value="" />
+            <div id="memoDiv">
+                <label>MEMO</label>
+                <div class="input-group justify-content-center align-items-center">
+                    <input type="text" id="memo" value="" />
+                </div>
+                <div class="ssc-cost">If memo is required, please ensure this memo is correct.<br />We cannot refund incorrect withdrawals.</div>
             </div>
-            <div class="ssc-cost">If memo is required, please ensure this memo is correct.<br />We cannot refund incorrect withdrawals.</div>
+            <div id="erc20details" style="display: none;">
+                <br />
+                <div class="ssc-cost mb-2">
+                    Your gas fee balance: <span id="gas_balance">0.00</span> <span class="peggedTxToken"></span>
+                    <button id="showDepositGas" class="btn btn-primary">+</button>
+                    <button id="refreshGasFeeBalance" class="btn btn-info"><i class="fas fa-sync"></i></button>
+                    <div id="depositGasDiv" style="display: none;">
+                        <div class="input-group">
+                            <input type="text" id="deposit_gas_amt" placeholder="0.000" />
+                            <div class="ssc-cost mb-2">Current SWAP.ETH balance: <span id="eth_balance">0.00</span></div>
+                            <div class="ssc-cost" style="text-align: left;">In order to withdraw ERC20 tokens, you must provide enough SWAP.ETH to cover the Ethereum gas fee. This reserved fee balance is non-refundable.</div>
+                            <div class="ssc-cost" style="text-align: left;">Fee deposits can take up to 5 minutes to reflect in balance.</div>
+                            <button id="deposit_gas" class="btn btn-primary">Deposit</button>
+                            <div class="invalid-tooltip" id="invalid-tooltip-gas">
+                                Please enter an amount greater than 0 and not more than your current balance.
+                            </div>
+                        </div>                       
+                    </div>
+                </div>
+                <div class="ssc-cost mb-2">Current gas fee: <span id="eth_gas_fee">0.00</span> <span class="peggedTxToken"></span></div>
+                <!--<div class="ssc-cost mb-2">Remaining balance after withdrawal: <span id="gas_balance_after">0.00</span> <span class="peggedTxToken"></span></div>-->
+            </div>
         </div>
-
         <div class="modal-footer" style="padding-bottom: 0;">
             <button id="btnBuy" type="button" class="btn btn-primary btn-lg w-100" onclick="onWithdrawClick()" style="font-size: 28px;">WITHDRAW <span class="ts">HIVE</span></button>
-        </div>
+        </div>        
 
         <div class="privex">
             <a href="https://pay.privex.io/order/?r=steem-engine" target="_blank">
@@ -74,10 +109,44 @@
 </div>
 
 <script>
+    $("#erc20Token").on("change", erc20TokenSelected);
+
     if (!SE.Settings.eth_bridge)
         SE.fetchSettings();
 
-    function onWithdrawClick() {
+    $(document).ready(function () {
+        SE.fetchSupportedERC20s(true, false, (err, result) => {
+            $("#erc20Token").find("option").remove();
+
+            $("#erc20Token").append('<option value="">Please select a token</option>');
+            for (let i = 0; i < result.length; i++) {
+                $("#erc20Token").append('<option value="' + result[i].symbol + '">' + result[i].symbol + '</option>');
+            }
+        });
+
+        $("#showDepositGas").click(function () {
+            $("#depositGasDiv").show();
+        });
+
+        $("#deposit_gas").click(function () {
+            let amount = $("#deposit_gas_amt").val();
+            let eth_balance = SE.GetBalance(SE.Settings.eth_bridge.ethereum.pegged_token_symbol);
+            
+            if (isNaN(amount) || amount <= 0 || amount > eth_balance) {
+                $('#deposit_gas_amt').addClass("is-invalid");
+            } else {
+                SE.DepositGas(amount);
+            }
+        });
+
+        $("#refreshGasFeeBalance").click(async function () {
+            SE.fetchFeeBalance((err, result) => {                
+                $("#gas_balance").text(result);
+            });            
+        })
+    });
+
+    async function onWithdrawClick() {
         var token = Config.PEGGED_TOKENS.find(p => p.symbol == $('#withdrawal_token').val());
 
         if (!token)
@@ -87,7 +156,7 @@
 
         var amount = parseFloat($('#withdraw_amount').val());
 
-        if (isNaN(amount) || amount <= 0 || amount > SE.GetBalance(token.pegged_token_symbol)) {
+        if (isNaN(amount) || amount <= 0 || (token.symbol != 'ERC20' && amount > SE.GetBalance(token.pegged_token_symbol))) {
             $('#withdraw_amount').addClass("is-invalid");
         } else {
             if (min_withdraw && amount < min_withdraw.amount) {
@@ -101,13 +170,37 @@
                     else {
                         $('#error_response').text('');
 
-                        if (token.symbol == SE.Settings.eth_bridge.ethereum.pegged_token_symbol.replace('SWAP.', '')) {
+                        if (token.symbol == SE.Settings.eth_bridge.ethereum.pegged_token_symbol.replace('SWAP.', '') || token.symbol == 'ERC20') {
                             if ($('#receive_amt').text() < 0) {
                                 $('#withdraw_amount').addClass("is-invalid");
                             } else {
-                                SE.WithdrawEth(token.symbol, $('#withdraw_amount').val(), $('#withdraw_address').val(), (err, result) => {
-                                    console.log(result);
-                                });
+                                if (token.symbol == 'ERC20') {
+                                    let gasBalance = SE.EthFeeBalance;
+                                    let gasFee = SE.EthWithdrawalFee;
+                                    let remaining = gasBalance - gasFee;
+
+                                    if (remaining > 0) {
+                                        let erc20Token = $("#erc20Token").val();
+                                        let peggedSymbol = SE.ERC20Tokens.find(t => t.symbol === erc20Token).pegged_token_symbol;
+
+                                        // check amount
+                                        if (amount > SE.GetBalance(peggedSymbol)) {
+                                            $('#withdraw_amount').addClass("is-invalid");
+                                        } else {
+                                            SE.WithdrawEth(peggedSymbol, $('#withdraw_amount').val(), $('#withdraw_address').val(), (err, result) => {
+                                                console.log(result);
+                                            });
+                                        }
+                                    } else {
+                                        $('#withdraw_address').addClass("is-invalid");
+                                        $('#error_response').text('Insufficient gas fee balance!');
+                                    }
+
+                                } else {
+                                    SE.WithdrawEth(SE.Settings.eth_bridge.ethereum.pegged_token_symbol, $('#withdraw_amount').val(), $('#withdraw_address').val(), (err, result) => {
+                                        console.log(result);
+                                    });
+                                }
                             }
 
                         } else {
@@ -133,6 +226,10 @@
         $('#withdraw_amount').removeClass("is-invalid");
     })
 
+    $(".invalid-tooltip-gas").on("click", function () {
+        $('#deposit_gas_amt').removeClass("is-invalid");
+    })
+
     $(".invalid-tooltip-address").on("click", function () {
         $('#withdraw_address').removeClass("is-invalid");
     })
@@ -144,8 +241,26 @@
             amt = 0;
 
         let recvAmt = (amt * 0.99).toFixed(tokenWith == 'HIVE' ? 3 : 8);
-        if (amt > 0 && tokenWith === SE.Settings.eth_bridge.ethereum.pegged_token_symbol.replace('SWAP.','')) {
-            recvAmt = ((amt * 0.99) - SE.EthWithdrawalFee).toFixed(8)
+        if (amt > 0 && tokenWith === SE.Settings.eth_bridge.ethereum.pegged_token_symbol.replace('SWAP.', '')) {
+            recvAmt = ((amt * 0.99) - SE.EthWithdrawalFee).toFixed(8);
+
+            if (recvAmt < 0) {
+                recvAmt = " invalid";
+                $('#withdraw_address').addClass("is-invalid");
+                $('#error_response').text('Insufficient gas fee balance!');
+            }
+        }
+
+        if (tokenWith == 'ERC20') {
+            let erc20Token = $("#erc20Token").val();
+            let peggedSymbol = SE.ERC20Tokens.find(t => t.symbol === erc20Token).pegged_token_symbol;
+            let erc20Balance = SE.GetBalance(peggedSymbol);
+            if (amt > erc20Balance) {
+                recvAmt = " invalid";
+                $('#withdraw_amount').addClass("is-invalid");
+            } else {
+                $('#withdraw_amount').removeClass("is-invalid");
+            }
         }
 
         $('#receive_amt').text(recvAmt);
@@ -183,15 +298,59 @@
         $('#withdraw_address').prop('disabled', token.symbol == 'HIVE');
         $('#withdraw_address').val((token.symbol == 'HIVE') ? SE.User.name : '');
                 
-        if (token.symbol == SE.Settings.eth_bridge.ethereum.pegged_token_symbol.replace('SWAP.', '')) {            
+        if (token.symbol == SE.Settings.eth_bridge.ethereum.pegged_token_symbol.replace('SWAP.', '') || token.symbol == 'ERC20') {            
             SE.getEthWithdrawalFee((err, result) => {
                 SE.EthWithdrawalFee = Number(result.data);
             });
+        }
+
+        if (token.symbol == 'ETH' || token.symbol == 'ERC20') {
+            $("#memoDiv").hide();
+        } else {
+            $("#memoDiv").show();
+        }
+
+        if (token.symbol == 'ERC20') {
+            $("#erc20div").show();
+            $("#erc20details").show();
+            $("#nonErc20Balance").hide();
+        } else {
+            $("#erc20div").hide();
+            $("#erc20details").hide();
+            $("#nonErc20Balance").show();
         }
     }
 
     if ('<%= data && data.symbol ? data.symbol : "" %>' != '') {
         $('#withdrawal_token').val('<%= data && data.symbol ? data.symbol : "" %>');
         updateToken();
+    }
+
+    async function erc20TokenSelected() {
+        let symbol = $("#erc20Token").val();
+        let addr = $('#deposit_eth_address').val();
+        
+        //let contract = SE.ERC20Tokens.find(t => t.symbol === symbol).contract_address;
+        let peggedSymbol = SE.ERC20Tokens.find(t => t.symbol === symbol).pegged_token_symbol;
+        $("#peggedTokenSymbol").text(peggedSymbol);
+        $('#erc20_balance').text(SE.GetBalance(peggedSymbol));
+
+        let eth_balance = SE.GetBalance(SE.Settings.eth_bridge.ethereum.pegged_token_symbol);
+        let gasBalance = 0;
+        SE.fetchFeeBalance((err, result) => {
+            gasBalance = result;            
+            let gasFee = SE.EthWithdrawalFee;
+            //let remaining = gasBalance - gasFee;
+            $("#gas_balance").text(gasBalance);
+            $("#eth_gas_fee").text(gasFee);
+            //$("#gas_balance_after").text(remaining);
+            $("#eth_balance").text(eth_balance);
+            //$("#erc20_balance").text(balance);
+            $("#withAppend").text(peggedSymbol);
+            $('.ts').text(symbol);
+            $(".peggedTxToken").text(SE.Settings.eth_bridge.ethereum.pegged_token_symbol);
+        }); 
+
+        
     }
 </script>
