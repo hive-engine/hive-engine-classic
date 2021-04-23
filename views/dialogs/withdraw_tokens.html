@@ -28,73 +28,75 @@
                     <% }); %>
                 </select>
             </div>
-
-            <div id="nonErc20Balance">
-                <label class="mb-0">Current Balance</label>
-                <p id="withdraw_balance" class="mb-4">
-                    <%= addCommas(SE.GetBalance('SWAP.HIVE')) + ' SWAP.HIVE' %>
-                </p>
-            </div>
-
-            <div id="erc20div" style="display: none;">
-                <label>ERC20 Token </label>
-                <div class="input-group" id="erc20AddrDiv">
-                    <select name="erc20Token" id="erc20Token"></select>
+            <div id="withdraw_body">
+                <div id="nonErc20Balance">
+                    <label class="mb-0">Current Balance</label>
+                    <p id="withdraw_balance" class="mb-4">
+                        <%= addCommas(SE.GetBalance('SWAP.HIVE')) + ' SWAP.HIVE' %>
+                    </p>
                 </div>
-                <br />
-                <label class="mb-0">Current <span id="peggedTokenSymbol">ERC20</span> Balance</label>
-                <p class="mb-4" id="erc20_balance">0.00</p>
-            </div>
 
-            <label>WITHDRAW AMOUNT</label>
-            <div class="input-group justify-content-center align-items-center">
-                <input type="text" placeholder="0.000" id="withdraw_amount">
-                <div class="input-group-append pts" id="withAppend">
-                    SWAP.HIVE
+                <div id="erc20div" style="display: none;">
+                    <label>ERC20 Token </label>
+                    <div class="input-group" id="erc20AddrDiv">
+                        <select name="erc20Token" id="erc20Token"></select>
+                    </div>
+                    <br />
+                    <label class="mb-0">Current <span id="peggedTokenSymbol">ERC20</span> Balance</label>
+                    <p class="mb-4" id="erc20_balance">0.00</p>
                 </div>
-                <div class="invalid-tooltip">
-                    Please enter an amount greater than 0, not more than your current balance and larger than min. withdraw amount.
-                </div>
-            </div>
-            <div class="ssc-cost mb-2">You will receive: <span id="receive_amt">0</span> <span class="ts">HIVE</span></div>
-            <div class="ssc-cost mb-2 min_withdrawal_warning" style="display:none;">Min. withdrawal amount: <span id="min_withdraw_amt">0</span> <span class="ts">HIVE</span></div>
 
-            <label>WITHDRAW ADDRESS</label>
-            <div class="input-group justify-content-center align-items-center">
-                <input type="text" id="withdraw_address" value="<%= SE.User.name %>" disabled="disabled" />
-                <div class="invalid-tooltip invalid-tooltip-address" id="error_response">Please enter a withdraw address</div>
-            </div>
-            <div class="ssc-cost">Please ensure this address is correct.<br />We cannot refund incorrect withdrawals.</div>
-
-            <div id="memoDiv">
-                <label>MEMO</label>
+                <label>WITHDRAW AMOUNT</label>
                 <div class="input-group justify-content-center align-items-center">
-                    <input type="text" id="memo" value="" />
-                </div>
-                <div class="ssc-cost">If memo is required, please ensure this memo is correct.<br />We cannot refund incorrect withdrawals.</div>
-            </div>
-            <div id="erc20details" style="display: none;">
-                <br />
-                <div class="ssc-cost mb-2">
-                    Your gas fee balance: <span id="gas_balance">0.00</span> <span class="peggedTxToken"></span>
-                    <button id="showDepositGas" class="btn btn-primary">+</button>
-                    <button id="refreshGasFeeBalance" class="btn btn-info"><i class="fas fa-sync"></i></button>
-                    <div id="depositGasDiv" style="display: none;">
-                        <div class="input-group">
-                            <input type="text" id="deposit_gas_amt" placeholder="0.000" />
-                            <div class="ssc-cost mb-2">Current SWAP.ETH balance: <span id="eth_balance">0.00</span></div>
-                            <div class="ssc-cost" style="text-align: left;">In order to withdraw ERC20 tokens, you must provide enough SWAP.ETH to cover the Ethereum gas fee. This reserved fee balance is non-refundable.</div>
-                            <div class="ssc-cost" style="text-align: left;">Fee deposits can take up to 5 minutes to reflect in balance.</div>
-                            <button id="deposit_gas" class="btn btn-primary">Deposit</button>
-                            <div class="invalid-tooltip" id="invalid-tooltip-gas">
-                                Please enter an amount greater than 0 and not more than your current balance.
-                            </div>
-                        </div>                       
+                    <input type="text" placeholder="0.000" id="withdraw_amount">
+                    <div class="input-group-append pts" id="withAppend">
+                        SWAP.HIVE
+                    </div>
+                    <div class="invalid-tooltip">
+                        Please enter an amount greater than 0, not more than your current balance and larger than min. withdraw amount.
                     </div>
                 </div>
-                <div class="ssc-cost mb-2">Current gas fee: <span id="eth_gas_fee">0.00</span> <span class="peggedTxToken"></span></div>
-                <!--<div class="ssc-cost mb-2">Remaining balance after withdrawal: <span id="gas_balance_after">0.00</span> <span class="peggedTxToken"></span></div>-->
+                <div class="ssc-cost mb-2">You will receive: <span id="receive_amt">0</span> <span class="ts">HIVE</span></div>
+                <div class="ssc-cost mb-2 min_withdrawal_warning" style="display:none;">Min. withdrawal amount: <span id="min_withdraw_amt">0</span> <span class="ts">HIVE</span></div>
+
+                <label>WITHDRAW ADDRESS</label>
+                <div class="input-group justify-content-center align-items-center">
+                    <input type="text" id="withdraw_address" value="<%= SE.User.name %>" disabled="disabled" />
+                    <div class="invalid-tooltip invalid-tooltip-address" id="error_response">Please enter a withdraw address</div>
+                </div>
+                <div class="ssc-cost">Please ensure this address is correct.<br />We cannot refund incorrect withdrawals.</div>
+
+                <div id="memoDiv">
+                    <label>MEMO</label>
+                    <div class="input-group justify-content-center align-items-center">
+                        <input type="text" id="memo" value="" />
+                    </div>
+                    <div class="ssc-cost">If memo is required, please ensure this memo is correct.<br />We cannot refund incorrect withdrawals.</div>
+                </div>
+                <div id="erc20details" style="display: none;">
+                    <br />
+                    <div class="ssc-cost mb-2">
+                        Your gas fee balance: <span id="gas_balance">0.00</span> <span class="peggedTxToken"></span>
+                        <button id="showDepositGas" class="btn btn-primary">+</button>
+                        <button id="refreshGasFeeBalance" class="btn btn-info"><i class="fas fa-sync"></i></button>
+                        <div id="depositGasDiv" style="display: none;">
+                            <div class="input-group">
+                                <input type="text" id="deposit_gas_amt" placeholder="0.000" />
+                                <div class="ssc-cost mb-2">Current SWAP.ETH balance: <span id="eth_balance">0.00</span></div>
+                                <div class="ssc-cost" style="text-align: left;">In order to withdraw ERC20 tokens, you must provide enough SWAP.ETH to cover the Ethereum gas fee. This reserved fee balance is non-refundable.</div>
+                                <div class="ssc-cost" style="text-align: left;">Fee deposits can take up to 5 minutes to reflect in balance.</div>
+                                <button id="deposit_gas" class="btn btn-primary">Deposit</button>
+                                <div class="invalid-tooltip" id="invalid-tooltip-gas">
+                                    Please enter an amount greater than 0 and not more than your current balance.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ssc-cost mb-2">Current gas fee: <span id="eth_gas_fee">0.00</span> <span class="peggedTxToken"></span></div>
+                    <!--<div class="ssc-cost mb-2">Remaining balance after withdrawal: <span id="gas_balance_after">0.00</span> <span class="peggedTxToken"></span></div>-->
+                </div>
             </div>
+            <div id="withdraw_warning" class="alert alert-warning" style="display: none;"></div>
         </div>
         <div class="modal-footer" style="padding-bottom: 0;">
             <button id="btnBuy" type="button" class="btn btn-primary btn-lg w-100" onclick="onWithdrawClick()" style="font-size: 28px;">WITHDRAW <span class="ts">HIVE</span></button>
@@ -274,6 +276,18 @@
         
         if (!token)
             return;
+
+        var disabledToken = SE.Settings.disabled_withdrawals.find(x => x.symbol == token.pegged_token_symbol);
+        if (disabledToken) {
+            $("#withdraw_body").hide();
+            $("#btnBuy").hide();
+            $("#withdraw_warning").text(disabledToken.reason);
+            $("#withdraw_warning").show();
+        } else {
+            $("#withdraw_body").show();
+            $("#withdraw_warning").hide();
+            $("#btnBuy").show();
+        }
 
         var min_withdraw = Config.MIN_WITHDRAW.find(p => p.symbol == token.symbol);
         
