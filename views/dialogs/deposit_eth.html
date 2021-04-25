@@ -78,10 +78,12 @@
                 let legacyWeb3 = new Web3(window.web3.currentProvider);
                 result.balance = legacyWeb3.utils.fromWei(wei);
                 $("#eth_balance").text(result.balance);
+
+                $('#deposit_eth_address').removeClass("is-invalid");
             }
         }
 
-        if (!result && err) {
+        if ((!result && err) || result.data.ethereumAddress == '') {
             $('#deposit_eth_address').addClass("is-invalid");
         }
 
@@ -105,7 +107,7 @@
         let amount = $("#deposit_amount").val();
         let addr = $('#deposit_eth_address').val();
 
-        if (isNaN(amount) || amount == 0 || amount > '<%=data.balance%>' || amount < 0.001) {
+        if (isNaN(amount) || amount == 0 || amount < 0.001) {
             $('#deposit_amount').addClass("is-invalid");
             SE.HideLoading();
         } else if (addr == "") {
