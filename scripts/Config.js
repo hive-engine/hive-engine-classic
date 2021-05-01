@@ -95,11 +95,11 @@ Config = {
             symbol: 'DOGE',
             pegged_token_symbol: 'SWAP.DOGE'
         },
-        //{
-        //    name: 'Telos',
-        //    symbol: 'TLOS',
-        //    pegged_token_symbol: 'SWAP.TLOS'
-        //},
+        {
+            name: 'Telos',
+            symbol: 'TLOS',
+            pegged_token_symbol: 'SWAP.TLOS'
+        },
         {
             name: 'Sand',
             symbol: 'EOSSAND',
