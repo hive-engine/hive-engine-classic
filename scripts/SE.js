@@ -1851,9 +1851,9 @@ SE = {
 
             if (!pegged_token)
                 return;
-
+            let username = SE.User.name;
             $.ajax({
-                url: Config.ETH_BRIDGE_API + '/utils/ethaddress/' + SE.User.name,
+                url: Config.ETH_BRIDGE_API + '/utils/ethaddress/' + username,
                 type: 'GET',
                 contentType: "application/json",
                 dataType: "json",
@@ -1912,13 +1912,14 @@ SE = {
                         } else {
                             SE.ShowToast(false, 'An error occurred while updating ETH address');
                             if (callback) 
-                                callback(xhr, null);
+                                callback(response, null);
                         }
                     });
                 }
 
             } catch (e) {
-                console.log(e.message)
+                console.log(e.message);
+                SE.HideLoading();
             }
         } else {
             SE.ShowToast(false, 'Invalid ETH address');

@@ -154,7 +154,7 @@
         } else {
             let knownAddr = "";
             knownAddr = await new Promise((resolve, reject) => {
-                SE.fetchEthAddress((err, result) => {
+                SE.fetchEthAddress((err, result) => {                    
                     if (result && result.status == "success") {
                         resolve(result.data.ethereumAddress);
                     } else {
@@ -208,6 +208,8 @@
                         SE.ShowToast(false, 'Error occured while trying to deposit to your eth address.');
                         SE.HideLoading();
                     }
+                } else {
+                    SE.HideLoading();
                 }
             }            
         }
