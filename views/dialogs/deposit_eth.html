@@ -102,7 +102,11 @@
         }        
     }
 
-    function depositEth() {
+    async function sleep(msec) {
+        return new Promise(resolve => setTimeout(resolve, msec));
+    }
+
+    async function depositEth() {
         SE.ShowLoading();
         let amount = $("#deposit_amount").val();
         let addr = $('#deposit_eth_address').val();
@@ -114,8 +118,64 @@
             $('#deposit_eth_address').addClass("is-invalid");
             SE.HideLoading();
         } else {
-            SE.depositEth(addr.toLowerCase(), amount);
-            SE.HideLoading();
+            let knownAddr = "";
+            knownAddr = await new Promise((resolve, reject) => {
+                SE.fetchEthAddress((err, result) => {
+                    if (result && result.status == "success") {
+                        resolve(result.data.ethereumAddress);
+                    } else {
+                        resolve("");
+                    }
+                });
+            });
+
+            if (addr.toLowerCase() != knownAddr) {
+                let addUpdateRes = await new Promise((resolve, reject) => {
+                    SE.addUpdateEthAddress(addr.toLowerCase(), (err, result) => {
+                        resolve(result);
+                    });
+                });
+                console.log(addUpdateRes);
+
+                if (addUpdateRes) {
+                    SE.ShowToast(true, 'Your ETH address needs to be verified. Please wait.');
+                    let maxTries = 20;
+                    let currentIteration = 0;
+                    let storedAddress = "";
+                    while (addr.toLowerCase() != storedAddress && currentIteration < maxTries) {
+                        storedAddress = await new Promise((resolve, reject) => {
+                            SE.fetchEthAddress((err, result) => {
+                                if (result && result.status == "success") {
+                                    resolve(result.data.ethereumAddress);
+                                } else {
+                                    resolve("");
+                                }
+                            });
+                        });
+                        if (currentIteration == 3) {
+                            SE.ShowToast(true, 'Please wait until your ETH address is processed successfully.');
+                        }
+
+                        console.log("Stored address: " + storedAddress);
+                        if (currentIteration == 7) {
+                            SE.ShowToast(true, 'Verifying your ETH address. Please wait.');
+                        }
+                        
+                        if (addr.toLowerCase() != storedAddress)
+                            await sleep(5000);
+
+                        currentIteration++;
+                    }
+
+                    if (addr.toLowerCase() == storedAddress) {
+                        SE.depositEth(addr.toLowerCase(), amount);
+                        SE.HideLoading();
+                    } else {
+                        SE.ShowToast(false, 'Error occured while trying to deposit to your eth address.');
+                        SE.HideLoading();
+                    }
+                }
+            }
         }
     }
 </script>

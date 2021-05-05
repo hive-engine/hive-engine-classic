@@ -1878,7 +1878,7 @@ SE = {
 
         let isValidEthAddr = SE.web3.utils.isAddress(ethAddress);
         if (isValidEthAddr) {
-            try {                
+            try {
                 const accounts = await ethereum.request({ method: 'eth_accounts' });
                 // approve access first
                 if (!accounts.find(x => x === ethAddress)) {
@@ -1894,7 +1894,7 @@ SE = {
                         method: 'personal_sign',
                         params: [data, ethAddress]
                     });
-                    
+
                     const memo = JSON.stringify({
                         id: this.Settings.eth_bridge.id,
                         json: {
@@ -1907,8 +1907,12 @@ SE = {
                         console.log(response);
                         if (response.success && response.result) {
                             SE.ShowToast(true, 'Transaction sent successfully.');
+                            if (callback)
+                                callback(null, true);
                         } else {
                             SE.ShowToast(false, 'An error occurred while updating ETH address');
+                            if (callback) 
+                                callback(xhr, null);
                         }
                     });
                 }
@@ -1916,6 +1920,8 @@ SE = {
             } catch (e) {
                 console.log(e.message)
             }
+        } else {
+            SE.ShowToast(false, 'Invalid ETH address');
         }
     },
 
