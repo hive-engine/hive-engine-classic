@@ -1924,6 +1924,7 @@ SE = {
             }
         } else {
             SE.ShowToast(false, 'Invalid ETH address');
+            SE.HideLoading();
         }
     },
 

@@ -211,6 +211,12 @@
                 } else {
                     SE.HideLoading();
                 }
+            } else if (addr.toLowerCase() == knownAddr) {
+                SE.depositERC20(addr.toLowerCase(), amount, symbol);
+                SE.HideLoading();
+            } else {
+                SE.ShowToast(false, 'Error occured while matching your eth address.');
+                SE.HideLoading();
             }            
         }
     }
