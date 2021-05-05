@@ -1888,6 +1888,7 @@ SE = {
                         console.log(e)
                     }
                 } else {
+                    let web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
                     web3.eth.defaultAccount = ethAddress;
                     data = SE.web3.utils.fromUtf8(SE.User.name);
                     let ethSig = await window.ethereum.request({
