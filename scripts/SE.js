@@ -2093,4 +2093,14 @@ SE = {
     DepositGas: async function (amount) {
         SE.SendToken(this.Settings.eth_bridge.ethereum.pegged_token_symbol, this.Settings.eth_bridge.account, amount, 'fee');
     },
+    GetTokenCreationFee: async function (callback) {
+        let fee = 0;
+        await ssc.find('tokens', 'params', {}, 20, 0, [], (err, result) => {
+            if (result && result[0] && result[0].tokenCreationFee)
+                fee = result[0].tokenCreationFee;
+
+            if (callback)
+                callback(null, fee);
+        });
+    },
 }
