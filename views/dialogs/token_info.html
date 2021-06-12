@@ -30,11 +30,19 @@
 			</p>
 			
 			<label class="mb-0">Website URL</label>
-      <p class="mb-4">
-				<% if(data.metadata && data.metadata.url) { %>
-					<a href="<%= encodeURI(xss(data.metadata.url)) %>" target="_blank" style="font-size: 20px;"><span class="text-cutoff"><%= filterXSS(data.metadata.url) %></span>&nbsp;&nbsp;&nbsp;<i class="fas fa-external-link-square-alt"></i></a>
+			<p class="mb-4">
+				<% if(data.metadata && data.metadata.url) {
+				var tokenUrl = data.metadata.url;
+				var prefix = 'http://';
+				var prefixSecure = 'https://';
+				if (tokenUrl.substr(0, prefix.length) !== prefix && tokenUrl.substr(0, prefixSecure.length) !== prefixSecure)
+				{
+				tokenUrl = prefix + tokenUrl;
+				}
+				%>
+				<a href="<%= encodeURI(xss(tokenUrl)) %>" target="_blank" style="font-size: 20px;"><span class="text-cutoff"><%= filterXSS(tokenUrl) %></span>&nbsp;&nbsp;&nbsp;<i class="fas fa-external-link-square-alt"></i></a>
 				<% } else { %>
-					None
+				None
 				<% } %>
 			</p>
 			
