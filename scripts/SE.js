@@ -6,6 +6,7 @@ SE = {
     Settings: {},
     web3: {},
     EthWithdrawalFee: 0,
+    BnbWithdrawalFee: 0,
     ABI: [{
         constant: true,
         inputs: [{ name: '_owner', type: 'address' }],
@@ -27,7 +28,9 @@ SE = {
         type: 'function'
     }],
     ERC20Tokens: [],
+    BEP20Tokens: [],
     EthFeeBalance: 0,
+    BnbFeeBalance: 0,
 
     Api: function(url, data, callback, always) {
         if (data == null || data == undefined) data = {};
@@ -1879,43 +1882,21 @@ SE = {
         let isValidEthAddr = SE.web3.utils.isAddress(ethAddress);
         if (isValidEthAddr) {
             try {
+                let accountFound = false;
+
                 const accounts = await ethereum.request({ method: 'eth_accounts' });
-                // approve access first
-                if (!accounts.find(x => x === ethAddress)) {
+                accountFound = accounts.find(x => x === ethAddress);
+
+                if (!accountFound) {
                     try {
-                        await window.ethereum.request({ method: 'eth_requestAccounts' })
+                        SE.requestPermissionsWallet(ethAddress, callback, 'eth');
                     } catch (e) {
                         console.log(e)
                     }
-                } else {
-                    let web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
-                    web3.eth.defaultAccount = ethAddress;
-                    data = SE.web3.utils.fromUtf8(SE.User.name);
-                    let ethSig = await window.ethereum.request({
-                        method: 'personal_sign',
-                        params: [data, ethAddress]
-                    });
+                }
 
-                    const memo = JSON.stringify({
-                        id: this.Settings.eth_bridge.id,
-                        json: {
-                            ethereumAddress: ethAddress,
-                            signature: ethSig
-                        }
-                    })
-
-                    hive_keychain.requestTransfer(SE.User.name, this.Settings.eth_bridge.account, 0.001, memo, 'HIVE', function (response) {
-                        console.log(response);
-                        if (response.success && response.result) {
-                            SE.ShowToast(true, 'Transaction sent successfully.');
-                            if (callback)
-                                callback(null, true);
-                        } else {
-                            SE.ShowToast(false, 'An error occurred while updating ETH address');
-                            if (callback) 
-                                callback(response, null);
-                        }
-                    });
+                if (accountFound) {
+                    SE.addUpdateEthAddressTx(ethAddress, callback);
                 }
 
             } catch (e) {
@@ -1926,6 +1907,36 @@ SE = {
             SE.ShowToast(false, 'Invalid ETH address');
             SE.HideLoading();
         }
+    },
+    addUpdateEthAddressTx: async function (ethAddress, callback) {
+        let web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
+        web3.eth.defaultAccount = ethAddress;
+        data = SE.web3.utils.fromUtf8(SE.User.name);
+        let ethSig = await window.ethereum.request({
+            method: 'personal_sign',
+            params: [data, ethAddress]
+        });
+
+        const memo = JSON.stringify({
+            id: this.Settings.eth_bridge.id,
+            json: {
+                ethereumAddress: ethAddress,
+                signature: ethSig
+            }
+        })
+
+        hive_keychain.requestTransfer(SE.User.name, this.Settings.eth_bridge.account, 0.001, memo, 'HIVE', function (response) {
+            console.log(response);
+            if (response.success && response.result) {
+                SE.ShowToast(true, 'Transaction sent successfully.');
+                if (callback)
+                    callback(null, true);
+            } else {
+                SE.ShowToast(false, 'An error occurred while updating ETH address');
+                if (callback)
+                    callback(response, null);
+            }
+        });
     },
 
     fetchSettings: function () {
@@ -2103,4 +2114,272 @@ SE = {
                 callback(null, fee);
         });
     },
+    depositBnb: async function (bscAddress, bnbAmount) {
+        if (!this.Settings || !this.Settings.bsc_bridge)
+            this.fetchSettings();
+
+        try {
+            let depositAddress = this.Settings.bsc_bridge.gateway_address;
+            let bnbVal = SE.web3.utils.toHex(SE.web3.utils.toWei(bnbAmount.toString(), 'ether'));
+
+            const transactionHash = await ethereum.request({
+                method: 'eth_sendTransaction',
+                params: [
+                    {
+                        to: depositAddress,
+                        from: bscAddress,
+                        value: bnbVal
+                    },
+                ],
+            });
+
+            console.log(transactionHash);
+            SE.ShowToast(true, 'Deposit initiated.');
+        } catch (e) {
+            console.log(e.message)
+        }
+    },
+    fetchBscAddress: function (callback) {
+        try {
+            if (!this.Settings || !this.Settings.bsc_bridge)
+                this.fetchSettings();
+
+            var pegged_token = Config.PEGGED_TOKENS.find(p => p.symbol == 'BNB');
+
+            if (!pegged_token)
+                return;
+            let username = SE.User.name;
+            $.ajax({
+                url: Config.BSC_BRIDGE_API + '/utils/bscaddress/' + username,
+                type: 'GET',
+                contentType: "application/json",
+                dataType: "json",
+                success: result => {
+                    if (callback)
+                        callback(null, result);
+                },
+                error: (xhr, status, errorThrown) => {
+                    if (callback) {
+                        callback(xhr, null);
+                    }
+                }
+            });
+        } catch (e) {
+            console.log(e.message)
+        }
+    },
+
+    addUpdateBscAddress: async function (bscAddress, callback) {
+        if (!this.Settings || !this.Settings.bsc_bridge)
+            this.fetchSettings();
+
+        let isValidBscAddr = SE.web3.utils.isAddress(bscAddress);
+        if (isValidBscAddr) {
+            try {
+                let accountFound = false;
+
+                const accounts = await ethereum.request({ method: 'eth_accounts' });
+                accountFound = accounts.find(x => x === bscAddress);
+
+                if (!accountFound) {
+                    try {
+                        SE.requestPermissionsWallet(bscAddress, callback, 'bnb');
+                    } catch (e) {
+                        console.log(e)
+                    }
+                }
+
+                if (accountFound) {
+                    SE.addUpdateBscAddressTx(bscAddress, callback);
+                }
+
+            } catch (e) {
+                console.log(e.message);
+                SE.HideLoading();
+            }
+        } else {
+            SE.ShowToast(false, 'Invalid BSC address');
+            SE.HideLoading();
+        }
+    },
+    addUpdateBscAddressTx: async function (bscAddress, callback) {        
+        let web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
+        web3.eth.defaultAccount = bscAddress;
+        data = SE.web3.utils.fromUtf8(SE.User.name);
+        let bscSig = await window.ethereum.request({
+            method: 'personal_sign',
+            params: [data, bscAddress]
+        });
+
+        const memo = JSON.stringify({
+            id: this.Settings.bsc_bridge.id,
+            json: {
+                bscAddress: bscAddress,
+                signature: bscSig
+            }
+        })
+
+        hive_keychain.requestTransfer(SE.User.name, this.Settings.bsc_bridge.account, 0.001, memo, 'HIVE', function (response) {
+            console.log(response);
+            if (response.success && response.result) {
+                SE.ShowToast(true, 'Transaction sent successfully.');
+                if (callback)
+                    callback(null, true);
+            } else {
+                SE.ShowToast(false, 'An error occurred while updating BSC address');
+                if (callback)
+                    callback(response, null);
+            }
+        });
+    },
+    fetchSupportedBEP20s: function (deposit, withdrawal, callback) {
+        try {
+            $.ajax({
+                url: Config.BSC_BRIDGE_API + '/utils/tokens/bep20',
+                type: 'GET',
+                contentType: "application/json",
+                dataType: "json",
+                success: result => {
+                    const tokens = result.data.filter((t) => {
+                        if (typeof deposit === 'boolean') {
+                            return t.depositEnabled === deposit
+                        }
+
+                        return t.withdrawEnabled === withdrawal
+                    })
+                        .map((t) => {
+                            return {
+                                name: t.name,
+                                symbol: t.bscSymbol,
+                                pegged_token_symbol: t.heSymbol,
+                                contract_address: t.contractAddress,
+                                he_precision: t.hePrecision,
+                                bsc_precision: t.bscPrecision
+                            }
+                        });
+
+                    this.BEP20Tokens = tokens;
+
+                    if (callback)
+                        callback(null, tokens);
+                    //console.log(tokens);
+                    //return tokens;
+                },
+                error: (xhr, status, errorThrown) => {
+                    callback(xhr, null);
+                }
+            });
+        } catch (e) {
+            console.log(e.message)
+        }
+    },
+
+    getBEP20Balance: async function (contractAddress, walletAddress) {
+        if (!walletAddress || !contractAddress) {
+            return 0
+        }
+
+        let legacyWeb3 = new Web3(window.web3.currentProvider);
+        const contract = new legacyWeb3.eth.Contract(SE.ABI, contractAddress)
+
+        const [balance, decimals] = await Promise.all([
+            contract.methods.balanceOf(walletAddress).call(),
+            contract.methods.decimals().call()
+        ])
+
+        return Number(balance) / 10 ** decimals
+    },
+    depositBEP20: async function (bscAddress, bnbAmount, bep20Symbol) {
+        if (!this.Settings || !this.Settings.bsc_bridge)
+            this.fetchSettings();
+
+        try {
+            let depositAddress = this.Settings.bsc_bridge.gateway_address;
+            this.loading = true
+
+            const symbol = SE.BEP20Tokens.find(t => t.symbol === bep20Symbol)
+
+            let legacyWeb3 = new Web3(window.web3.currentProvider);
+            const contract = new legacyWeb3.eth.Contract(SE.ABI, symbol.contract_address)
+
+            const value = window.Decimal(bnbAmount * 10 ** symbol.bsc_precision).toFixed();
+
+            await contract.methods.transfer(depositAddress, value).send({ from: bscAddress });
+
+            SE.ShowToast(true, 'Deposit initiated.');
+        } catch (e) {
+            console.log(e.message)
+        }
+    },
+    fetchFeeBalanceBsc: function (callback) {
+        try {
+            $.ajax({
+                url: Config.BSC_BRIDGE_API + '/utils/feebalance/' + SE.User.name,
+                type: 'GET',
+                contentType: "application/json",
+                dataType: "json",
+                success: result => {
+                    SE.BnbFeeBalance = Number(result.data.balance);
+
+                    if (callback)
+                        callback(null, SE.BnbFeeBalance);
+                },
+                error: (xhr, status, errorThrown) => {
+                    console.log(xhr);
+                    //callback(xhr, null);
+                }
+            });
+        } catch (e) {
+            console.log(e)
+        }
+    },
+    DepositGasBsc: async function (amount) {
+        SE.SendToken(this.Settings.bsc_bridge.bnb.pegged_token_symbol, this.Settings.bsc_bridge.account, amount, 'fee');
+    },
+    getBnbWithdrawalFee: function (callback) {
+        $.ajax({
+            url: Config.BSC_BRIDGE_API + '/utils/withdrawalfee',
+            type: 'GET',
+            contentType: "application/json",
+            dataType: "json",
+            success: result => {
+                if (callback)
+                    callback(null, result);
+            },
+            error: (xhr, status, errorThrown) => {
+                callback(xhr, null);
+            }
+        });
+    },
+    WithdrawBsc: function (symbol, amount, address, callback) {
+        SE.SendToken(symbol, this.Settings.bsc_bridge.account, amount, address);
+    },
+    requestPermissionsWallet: function (addr, callback, baseToken) {
+        ethereum
+            .request({
+                method: 'wallet_requestPermissions',
+                params: [{ eth_accounts: { addr } }],
+            })
+            .then((permissions) => {
+                const accountsPermission = permissions.find(
+                    (permission) => permission.parentCapability === 'eth_accounts'
+                );
+                if (accountsPermission) {
+                    console.log('eth_accounts permission successfully requested!');
+                }
+
+                if (baseToken == 'bnb')
+                    SE.addUpdateBscAddressTx(addr, callback);
+                else if (baseToken == 'eth')
+                    SE.addUpdateEthAddressTx(addr, callback);
+            })
+            .catch((error) => {
+                if (error.code === 4001) {
+                    // EIP-1193 userRejectedRequest error
+                    console.log('Permissions needed to continue.');
+                } else {
+                    console.error(error);
+                }
+            });
+    }
 }

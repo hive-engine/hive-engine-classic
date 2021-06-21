@@ -8,6 +8,9 @@ Config = {
     NODE_API: 'https://node-api.hive-engine.com/v1/',
     HISTORY_API: 'https://accounts.hive-engine.com/',
     ETH_BRIDGE_API: 'https://ethgw.hive-engine.com/api',
+    ETH_CHAIN_ID: 1,
+    BSC_BRIDGE_API: 'https://bscgw.hive-engine.com/api',
+    BSC_CHAIN_ID: 56,
     SETTINGS_API: 'https://tribaldex.com/api',
     NATIVE_TOKEN: 'BEE',
     STEEMP_ACCOUNT: 'honey-swap',
@@ -44,6 +47,16 @@ Config = {
             name: 'Steem Backed Dollars',
             symbol: 'SBD',
             pegged_token_symbol: 'SWAP.SBD'
+        },
+        {
+            name: 'Binance Coin',
+            symbol: 'BNB',
+            pegged_token_symbol: 'SWAP.BNB'
+        },
+        {
+            name: 'BEP20 Tokens',
+            symbol: 'BEP20',
+            pegged_token_symbol: 'SWAP.BEP20'
         },
         {
             name: 'Bitcoin',

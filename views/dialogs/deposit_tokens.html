@@ -51,17 +51,46 @@
 
         if (selectedTokenVal === 'ETH' || selectedTokenVal == 'ERC20') {
             if (window.ethereum && window.Web3) {
-                SE.web3 = new window.Web3(window.ethereum)
-                try {
-                    await window.ethereum.request({ method: 'eth_requestAccounts' })
-                } catch (e) {
-                    console.log(e)
-                }
-            }
+                SE.web3 = new window.Web3(window.ethereum);
+                const chainId = await window.ethereum.request({ method: 'net_version' })
 
-            SE.fetchEthAddress((err, result) => {
-                showEthDeposit(err, result, selectedTokenVal);                
-            });
+                if (Number(chainId) !== Config.ETH_CHAIN_ID) {
+                    SE.ShowToast(false, `Please make sure Metamask network is set to the correct chain (ETH).`);
+                    SE.HideLoading();
+                } else {
+                    try {
+                        await window.ethereum.request({ method: 'eth_requestAccounts' })
+                    } catch (e) {
+                        console.log(e)
+                    }
+
+                    SE.fetchEthAddress((err, result) => {
+                        showEthDeposit(err, result, selectedTokenVal);
+                    });
+                }                
+            }
+            
+        } else if (selectedTokenVal === 'BNB' || selectedTokenVal == 'BEP20') {
+            if (window.ethereum && window.Web3) {
+                SE.web3 = new window.Web3(window.ethereum);
+
+                const chainId = await window.ethereum.request({ method: 'net_version' })
+
+                if (Number(chainId) !== Config.BSC_CHAIN_ID) {
+                    SE.ShowToast(false, `Please make sure Metamask network is set to the correct chain (BSC).`);
+                    SE.HideLoading();
+                } else {
+                    try {
+                        await window.ethereum.request({ method: 'eth_requestAccounts' })
+                    } catch (e) {
+                        console.log(e)
+                    }
+
+                    SE.fetchBscAddress((err, result) => {
+                        showBscDeposit(err, result, selectedTokenVal);
+                    });
+                }
+            }            
         } else {
 
             SE.GetDepositAddress($('#deposit_token').val(), result => {
@@ -99,6 +128,26 @@
             SE.ShowDialog('deposit_eth', model);
         else if (selectedTokenVal == 'ERC20')
             SE.ShowDialog('deposit_erc20', model);
+
+        SE.HideLoading();
+    }
+
+    async function showBscDeposit(err, result, selectedTokenVal) {
+        let model = { balance: 0, bscAddress: "" };
+        if (result && result.status == "success" && result.data.bscAddress) {
+            model.bscAddress = result.data.bscAddress;
+
+            if (result.data.bscAddress.length === 42) {
+                let wei = await window.ethereum.request({ method: 'eth_getBalance', params: [model.bscAddress] });
+                //await SE.Web3.eth.getBalance(result.data.ethereumAddress);
+                let legacyWeb3 = new Web3(window.web3.currentProvider);
+                model.balance = legacyWeb3.utils.fromWei(wei);
+            }
+        }
+        if (selectedTokenVal == 'BNB')
+            SE.ShowDialog('deposit_bnb', model);
+        else if (selectedTokenVal == 'BEP20')
+            SE.ShowDialog('deposit_bep20', model);
 
         SE.HideLoading();
     }
