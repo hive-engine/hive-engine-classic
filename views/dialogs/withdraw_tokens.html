@@ -46,6 +46,16 @@
                     <p class="mb-4" id="erc20_balance">0.00</p>
                 </div>
 
+                <div id="bep20div" style="display: none;">
+                    <label>BEP20 Token </label>
+                    <div class="input-group" id="bep20AddrDiv">
+                        <select name="bep20Token" id="bep20Token"></select>
+                    </div>
+                    <br />
+                    <label class="mb-0">Current <span id="peggedTokenSymbol">BEP20</span> Balance</label>
+                    <p class="mb-4" id="bep20_balance">0.00</p>
+                </div>
+
                 <label>WITHDRAW AMOUNT</label>
                 <div class="input-group justify-content-center align-items-center">
                     <input type="text" placeholder="0.000" id="withdraw_amount">
@@ -95,6 +105,28 @@
                     <div class="ssc-cost mb-2">Current gas fee: <span id="eth_gas_fee">0.00</span> <span class="peggedTxToken"></span></div>
                     <!--<div class="ssc-cost mb-2">Remaining balance after withdrawal: <span id="gas_balance_after">0.00</span> <span class="peggedTxToken"></span></div>-->
                 </div>
+                <div id="bep20details" style="display: none;">
+                    <br />
+                    <div class="ssc-cost mb-2">
+                        Your gas fee balance: <span id="gas_balance_bsc">0.00</span> <span class="peggedTxTokenBsc"></span>
+                        <button id="showDepositGasBsc" class="btn btn-primary">+</button>
+                        <button id="refreshGasFeeBalanceBsc" class="btn btn-info"><i class="fas fa-sync"></i></button>
+                        <div id="depositGasDivBsc" style="display: none;">
+                            <div class="input-group">
+                                <input type="text" id="deposit_gas_amt_bsc" placeholder="0.000" />
+                                <div class="ssc-cost mb-2">Current SWAP.BNB balance: <span id="bnb_balance">0.00</span></div>
+                                <div class="ssc-cost" style="text-align: left;">In order to withdraw BEP20 tokens, you must provide enough SWAP.BNB to cover the BSC gas fee. This reserved fee balance is non-refundable.</div>
+                                <div class="ssc-cost" style="text-align: left;">Fee deposits can take up to 5 minutes to reflect in balance.</div>
+                                <button id="deposit_gas_bsc" class="btn btn-primary">Deposit</button>
+                                <div class="invalid-tooltip" id="invalid-tooltip-gas">
+                                    Please enter an amount greater than 0 and not more than your current balance.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ssc-cost mb-2">Current gas fee: <span id="bnb_gas_fee">0.00</span> <span class="peggedTxTokenBsc"></span></div>
+                    <!--<div class="ssc-cost mb-2">Remaining balance after withdrawal: <span id="gas_balance_after">0.00</span> <span class="peggedTxToken"></span></div>-->
+                </div>
             </div>
             <div id="withdraw_warning" class="alert alert-warning" style="display: none;"></div>
         </div>
@@ -112,8 +144,9 @@
 
 <script>
     $("#erc20Token").on("change", erc20TokenSelected);
+    $("#bep20Token").on("change", bep20TokenSelected);
 
-    if (!SE.Settings.eth_bridge)
+    if (!SE.Settings.eth_bridge || !SE.Settings.bsc_bridge)
         SE.fetchSettings();
 
     $(document).ready(function () {
@@ -146,6 +179,40 @@
                 $("#gas_balance").text(result);
             });            
         })
+
+        /* BSC */
+        SE.fetchSupportedBEP20s(true, false, (err, result) => {
+            $("#bep20Token").find("option").remove();
+
+            $("#bep20Token").append('<option value="">Please select a token</option>');
+            for (let i = 0; i < result.length; i++) {
+                $("#bep20Token").append('<option value="' + result[i].symbol + '">' + result[i].symbol + '</option>');
+            }
+        });
+
+        $("#showDepositGasBsc").click(function () {
+            $("#depositGasDivBsc").show();
+        });
+
+        $("#deposit_gas_bsc").click(function () {
+            let amount = $("#deposit_gas_amt_bsc").val();
+            let bnb_balance = SE.GetBalance(SE.Settings.bsc_bridge.bnb.pegged_token_symbol);
+
+            if (isNaN(amount) || amount <= 0 || amount > bnb_balance) {
+                $('#deposit_gas_amt_bsc').addClass("is-invalid");
+            } else {
+                SE.DepositGasBsc(amount);
+            }
+        });
+
+        $("#refreshGasFeeBalanceBsc").click(async function () {
+            SE.ShowLoading();
+            SE.fetchFeeBalanceBsc((err, result) => {
+                SE.ShowToast(true, 'Balance retrieved: ' + result);
+                SE.HideLoading();
+                $("#gas_balance_bsc").text(result);
+            });
+        })
     });
 
     async function onWithdrawClick() {
@@ -158,7 +225,7 @@
 
         var amount = parseFloat($('#withdraw_amount').val());
 
-        if (isNaN(amount) || amount <= 0 || (token.symbol != 'ERC20' && amount > SE.GetBalance(token.pegged_token_symbol))) {
+        if (isNaN(amount) || amount <= 0 || (token.symbol != 'ERC20' && token.symbol != 'BEP20' && amount > SE.GetBalance(token.pegged_token_symbol))) {
             $('#withdraw_amount').addClass("is-invalid");
         } else {
             if (min_withdraw && amount < min_withdraw.amount) {
@@ -200,6 +267,39 @@
 
                                 } else {
                                     SE.WithdrawEth(SE.Settings.eth_bridge.ethereum.pegged_token_symbol, $('#withdraw_amount').val(), $('#withdraw_address').val(), (err, result) => {
+                                        console.log(result);
+                                    });
+                                }
+                            }
+
+                        } else if (token.symbol == SE.Settings.bsc_bridge.bnb.pegged_token_symbol.replace('SWAP.', '') || token.symbol == 'BEP20') {
+                            if ($('#receive_amt').text() < 0) {
+                                $('#withdraw_amount').addClass("is-invalid");
+                            } else {
+                                if (token.symbol == 'BEP20') {
+                                    let gasBalance = SE.BnbFeeBalance;
+                                    let gasFee = SE.BnbWithdrawalFee;
+                                    let remaining = gasBalance - gasFee;
+
+                                    if (remaining > 0) {
+                                        let bep20Token = $("#bep20Token").val();
+                                        let peggedSymbol = SE.BEP20Tokens.find(t => t.symbol === bep20Token).pegged_token_symbol;
+
+                                        // check amount
+                                        if (amount > SE.GetBalance(peggedSymbol)) {
+                                            $('#withdraw_amount').addClass("is-invalid");
+                                        } else {
+                                            SE.WithdrawBsc(peggedSymbol, $('#withdraw_amount').val(), $('#withdraw_address').val(), (err, result) => {
+                                                console.log(result);
+                                            });
+                                        }
+                                    } else {
+                                        $('#withdraw_address').addClass("is-invalid");
+                                        $('#error_response').text('Insufficient gas fee balance!');
+                                    }
+
+                                } else {
+                                    SE.WithdrawBsc(SE.Settings.bsc_bridge.bnb.pegged_token_symbol, $('#withdraw_amount').val(), $('#withdraw_address').val(), (err, result) => {
                                         console.log(result);
                                     });
                                 }
@@ -251,6 +351,14 @@
                 $('#withdraw_address').addClass("is-invalid");
                 $('#error_response').text('Insufficient gas fee balance!');
             }
+        } else if (amt > 0 && tokenWith === SE.Settings.bsc_bridge.bnb.pegged_token_symbol.replace('SWAP.', '')) {
+            recvAmt = ((amt * 0.99) - SE.BnbWithdrawalFee).toFixed(8);
+
+            if (recvAmt < 0) {
+                recvAmt = " invalid";
+                $('#withdraw_address').addClass("is-invalid");
+                $('#error_response').text('Insufficient gas fee balance!');
+            }
         }
 
         if (tokenWith == 'ERC20') {
@@ -258,6 +366,16 @@
             let peggedSymbol = SE.ERC20Tokens.find(t => t.symbol === erc20Token).pegged_token_symbol;
             let erc20Balance = SE.GetBalance(peggedSymbol);
             if (amt > erc20Balance) {
+                recvAmt = " invalid";
+                $('#withdraw_amount').addClass("is-invalid");
+            } else {
+                $('#withdraw_amount').removeClass("is-invalid");
+            }
+        } else if (tokenWith == 'BEP20') {
+            let bep20Token = $("#bep20Token").val();
+            let peggedSymbol = SE.BEP20Tokens.find(t => t.symbol === bep20Token).pegged_token_symbol;
+            let bep20Balance = SE.GetBalance(peggedSymbol);
+            if (amt > bep20Balance) {
                 recvAmt = " invalid";
                 $('#withdraw_amount').addClass("is-invalid");
             } else {
@@ -316,19 +434,33 @@
             SE.getEthWithdrawalFee((err, result) => {
                 SE.EthWithdrawalFee = Number(result.data);
             });
+        } else if (token.symbol == SE.Settings.bsc_bridge.bnb.pegged_token_symbol.replace('SWAP.', '') || token.symbol == 'BEP20') {
+            SE.getBnbWithdrawalFee((err, result) => {
+                SE.BnbWithdrawalFee = Number(result.data);
+            });
         }
 
-        if (token.symbol == 'ETH' || token.symbol == 'ERC20') {
+        if (token.symbol == 'ETH' || token.symbol == 'ERC20' || token.symbol == 'BNB' || token.symbol == 'BEP20') {
             $("#memoDiv").hide();
         } else {
             $("#memoDiv").show();
         }
 
         if (token.symbol == 'ERC20') {
+            $("#bep20div").hide();
+            $("#bep20details").hide();
             $("#erc20div").show();
             $("#erc20details").show();
             $("#nonErc20Balance").hide();
+        } else if (token.symbol == 'BEP20') {
+            $("#bep20div").show();
+            $("#bep20details").show();
+            $("#erc20div").hide();
+            $("#erc20details").hide();
+            $("#nonErc20Balance").hide();
         } else {
+            $("#bep20div").hide();
+            $("#bep20details").hide();
             $("#erc20div").hide();
             $("#erc20details").hide();
             $("#nonErc20Balance").show();
@@ -342,7 +474,6 @@
 
     async function erc20TokenSelected() {
         let symbol = $("#erc20Token").val();
-        let addr = $('#deposit_eth_address').val();
         
         //let contract = SE.ERC20Tokens.find(t => t.symbol === symbol).contract_address;
         let peggedSymbol = SE.ERC20Tokens.find(t => t.symbol === symbol).pegged_token_symbol;
@@ -366,5 +497,31 @@
         }); 
 
         
+    }
+
+    async function bep20TokenSelected() {
+        let symbol = $("#bep20Token").val();
+
+        let peggedSymbol = SE.BEP20Tokens.find(t => t.symbol === symbol).pegged_token_symbol;
+        $("#peggedTokenSymbol").text(peggedSymbol);
+        $('#bep20_balance').text(SE.GetBalance(peggedSymbol));
+
+        let bnb_balance = SE.GetBalance(SE.Settings.bsc_bridge.bnb.pegged_token_symbol);
+        let gasBalance = 0;
+        SE.fetchFeeBalanceBsc((err, result) => {
+            gasBalance = result;
+            let gasFee = SE.BnbWithdrawalFee;
+            //let remaining = gasBalance - gasFee;
+            $("#gas_balance_bsc").text(gasBalance);
+            $("#bnb_gas_fee").text(gasFee);
+            //$("#gas_balance_after").text(remaining);
+            $("#bnb_balance").text(bnb_balance);
+            //$("#erc20_balance").text(balance);
+            $("#withAppend").text(peggedSymbol);
+            $('.ts').text(symbol);
+            $(".peggedTxTokenBsc").text(SE.Settings.bsc_bridge.bnb.pegged_token_symbol);
+        });
+
+
     }
 </script>

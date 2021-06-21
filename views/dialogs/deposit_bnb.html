@@ -3,8 +3,8 @@
     <div class="modal-content blue">
         <div class="modal-header" style="padding: 40px 40px 10px 60px;">
             <h1 class="modal-title" style="font-size: 38px;">
-                DEPOSIT ETH
-                <div class="note">There is a 1% fee on deposits and withdrawals.<br />Ethereum deposits have no deposit fees.</div>
+                DEPOSIT BNB
+                <div class="note">There is a 1% fee on deposits and withdrawals.<br />BNB deposits have no deposit fees.</div>
             </h1>
 
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -17,17 +17,17 @@
 
             </div>
 
-            <label>Your ETH Address</label>
-            <div class="input-group justify-content-center align-items-center" id="ethAddrDiv">
-                <input type="text" id="deposit_eth_address" value="<%= data && data.ethereumAddress ? data.ethereumAddress : '' %>" />
+            <label>Your BSC Address</label>
+            <div class="input-group justify-content-center align-items-center" id="bscAddrDiv">
+                <input type="text" id="deposit_bsc_address" value="<%= data && data.bscAddress ? data.bscAddress : '' %>" />
                 <div class="invalid-tooltip">
-                    Please enter an ETH address
+                    Please enter a BSC address
                 </div>
             </div>
             
 
-            <label class="mb-0">Current ETH Balance</label>
-            <p class="mb-4" id="eth_balance">
+            <label class="mb-0">Current BNB Balance</label>
+            <p class="mb-4" id="bnb_balance">
                 <%= data && data.balance ? data.balance : 0 %>
             </p>
 
@@ -35,7 +35,7 @@
             <div class="input-group justify-content-center align-items-center">
                 <input type="text" placeholder="0.000" id="deposit_amount">
                 <div class="input-group-append">
-                    ETH
+                    BNB
                 </div>
                 <div class="invalid-tooltip">
                     Please enter a valid amount
@@ -44,7 +44,7 @@
         </div>
 
         <div class="modal-footer" style="padding-bottom: 0;">
-            <button id="btnDepositEth" type="button" class="btn btn-primary btn-lg w-100" aria-label="Deposit">Deposit Now</button>
+            <button id="btnDepositBnb" type="button" class="btn btn-primary btn-lg w-100" aria-label="Deposit">Deposit Now</button>
         </div>
 
         <div class="privex">
@@ -56,45 +56,45 @@
 </div>
 
 <script>
-    $("#fetchEthAddr").on("click", fetchEthAddr);
-    $("#addUpdateEthAddr").on("click", addUpdateEthAddr);
-    $("#ethAddrDiv .invalid-tooltip").on("click", function () { $('#deposit_eth_address').removeClass("is-invalid"); });
-    $("#btnDepositEth").on("click", depositEth);
+    $("#fetchBscAddr").on("click", fetchBscAddr);
+    $("#addUpdateBscAddr").on("click", addUpdateBscAddr);
+    $("#bscAddrDiv .invalid-tooltip").on("click", function () { $('#deposit_bsc_address').removeClass("is-invalid"); });
+    $("#btnDepositBnb").on("click", depositBnb);
 
-    function fetchEthAddr() {
+    function fetchBscAddr() {
         SE.ShowLoading();
-        SE.fetchEthAddress((err, result) => {
-            processFetchEth(err, result);
+        SE.fetchBscAddress((err, result) => {
+            processFetchBsc(err, result);
         });
     }
 
-    async function processFetchEth(err, result) {
-        if (result && result.status == "success" && result.data.ethereumAddress) {
-            if (result.data.ethereumAddress.length === 42) {
-                let wei = await window.ethereum.request({ method: 'eth_getBalance', params: [result.data.ethereumAddress] });
+    async function processFetchBsc(err, result) {
+        if (result && result.status == "success" && result.data.bscAddress) {
+            if (result.data.bscAddress.length === 42) {
+                let wei = await window.ethereum.request({ method: 'eth_getBalance', params: [result.data.bscAddress] });
                 
                 let legacyWeb3 = new Web3(window.web3.currentProvider);
                 result.balance = legacyWeb3.utils.fromWei(wei);
-                $("#eth_balance").text(result.balance);
+                $("#bnb_balance").text(result.balance);
 
-                $('#deposit_eth_address').removeClass("is-invalid");
+                $('#deposit_bsc_address').removeClass("is-invalid");
             }
         }
 
-        if ((!result && err) || result.data.ethereumAddress == '') {
-            $('#deposit_eth_address').addClass("is-invalid");
+        if ((!result && err) || result.data.bscAddress == '') {
+            $('#deposit_bsc_address').addClass("is-invalid");
         }
 
         SE.HideLoading();
     }
 
-    function addUpdateEthAddr() {
-        let addr = $('#deposit_eth_address').val();
+    function addUpdateBscAddr() {
+        let addr = $('#deposit_bsc_address').val();
         if (addr == "") {
-            $('#deposit_eth_address').addClass("is-invalid");
+            $('#deposit_bsc_address').addClass("is-invalid");
         } else {
             //SE.ShowLoading();
-            SE.addUpdateEthAddress(addr.toLowerCase(), (err, result) => {
+            SE.addUpdateBscAddress(addr.toLowerCase(), (err, result) => {
                 
             });
         }        
@@ -104,23 +104,23 @@
         return new Promise(resolve => setTimeout(resolve, msec));
     }
 
-    async function depositEth() {
+    async function depositBnb() {
         SE.ShowLoading();
         let amount = $("#deposit_amount").val();
-        let addr = $('#deposit_eth_address').val();
+        let addr = $('#deposit_bsc_address').val();
 
-        if (isNaN(amount) || amount == 0 || amount < 0.001) {
+        if (isNaN(amount) || amount == 0 || amount < 0.0001) {
             $('#deposit_amount').addClass("is-invalid");
             SE.HideLoading();
         } else if (addr == "") {
-            $('#deposit_eth_address').addClass("is-invalid");
+            $('#deposit_bsc_address').addClass("is-invalid");
             SE.HideLoading();
         } else {
             let knownAddr = "";
             knownAddr = await new Promise((resolve, reject) => {
-                SE.fetchEthAddress((err, result) => {
+                SE.fetchBscAddress((err, result) => {
                     if (result && result.status == "success") {
-                        resolve(result.data.ethereumAddress);
+                        resolve(result.data.bscAddress);
                     } else {
                         resolve("");
                     }
@@ -129,34 +129,34 @@
 
             if (addr.toLowerCase() != knownAddr) {
                 let addUpdateRes = await new Promise((resolve, reject) => {
-                    SE.addUpdateEthAddress(addr.toLowerCase(), (err, result) => {
+                    SE.addUpdateBscAddress(addr.toLowerCase(), (err, result) => {
                         resolve(result);
                     });
                 });
                 console.log(addUpdateRes);
 
                 if (addUpdateRes) {
-                    SE.ShowToast(true, 'Your ETH address needs to be verified. Please wait.');
+                    SE.ShowToast(true, 'Your BSC address needs to be verified. Please wait.');
                     let maxTries = 20;
                     let currentIteration = 0;
                     let storedAddress = "";
                     while (addr.toLowerCase() != storedAddress && currentIteration < maxTries) {
                         storedAddress = await new Promise((resolve, reject) => {
-                            SE.fetchEthAddress((err, result) => {
+                            SE.fetchBscAddress((err, result) => {
                                 if (result && result.status == "success") {
-                                    resolve(result.data.ethereumAddress);
+                                    resolve(result.data.bscAddress);
                                 } else {
                                     resolve("");
                                 }
                             });
                         });
                         if (currentIteration == 3) {
-                            SE.ShowToast(true, 'Please wait until your ETH address is processed successfully.');
+                            SE.ShowToast(true, 'Please wait until your BSC address is processed successfully.');
                         }
 
                         console.log("Stored address: " + storedAddress);
                         if (currentIteration == 7) {
-                            SE.ShowToast(true, 'Verifying your ETH address. Please wait.');
+                            SE.ShowToast(true, 'Verifying your BSC address. Please wait.');
                         }
 
                         if (addr.toLowerCase() != storedAddress)
@@ -166,20 +166,20 @@
                     }
 
                     if (addr.toLowerCase() == storedAddress) {
-                        SE.depositEth(addr.toLowerCase(), amount);
+                        SE.depositBnb(addr.toLowerCase(), amount);
                         SE.HideLoading();
                     } else {
-                        SE.ShowToast(false, 'Error occured while trying to deposit to your eth address.');
+                        SE.ShowToast(false, 'Error occured while trying to deposit to your bsc address.');
                         SE.HideLoading();
                     }
                 } else {
                     SE.HideLoading();
                 }
             } else if (addr.toLowerCase() == knownAddr) {
-                SE.depositEth(addr.toLowerCase(), amount);
+                SE.depositBnb(addr.toLowerCase(), amount);
                 SE.HideLoading();
             } else {
-                SE.ShowToast(false, 'Error occured while matching your eth address.');
+                SE.ShowToast(false, 'Error occured while matching your bsc address.');
                 SE.HideLoading();
             }
         }
