@@ -389,6 +389,9 @@
     $('#withdrawal_token').change(updateToken);
 
     function updateToken() {
+        if (!SE.Settings.eth_bridge || !SE.Settings.bsc_bridge)
+            SE.fetchSettings();
+
         $('#withdraw_amount').removeClass("is-invalid");
         var token = Config.PEGGED_TOKENS.find(p => p.symbol == $('#withdrawal_token').val());        
         
