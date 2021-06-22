@@ -200,7 +200,7 @@
                     }
 
                     if (addr.toLowerCase() == storedAddress) {
-                        SE.depositERC20(addr, amount, symbol);
+                        SE.depositERC20(addr.toLowerCase(), amount, symbol);
                         SE.HideLoading();
                     } else {
                         SE.ShowToast(false, 'Error occured while trying to deposit to your eth address.');
@@ -210,7 +210,7 @@
                     SE.HideLoading();
                 }
             } else if (addr.toLowerCase() == knownAddr) {
-                SE.depositERC20(addr, amount, symbol);
+                SE.depositERC20(addr.toLowerCase(), amount, symbol);
                 SE.HideLoading();
             } else {
                 SE.ShowToast(false, 'Error occured while matching your eth address.');
