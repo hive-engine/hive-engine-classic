@@ -2119,26 +2119,22 @@ SE = {
             this.fetchSettings();
 
         try {
-            SE.fetchBscAddress((err, result) => {
-                let bAddress = result.data.bscAddress;
+            let depositAddress = this.Settings.bsc_bridge.gateway_address;
+            let bnbVal = SE.web3.utils.toHex(SE.web3.utils.toWei(bnbAmount.toString(), 'ether'));
 
-                let depositAddress = this.Settings.bsc_bridge.gateway_address;
-                let bnbVal = SE.web3.utils.toHex(SE.web3.utils.toWei(bnbAmount.toString(), 'ether'));
-
-                const transactionHash = ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [
-                        {
-                            from: bAddress,
-                            to: depositAddress,
-                            value: bnbVal
-                        },
-                    ],
-                });
-
-                console.log(transactionHash);
-                SE.ShowToast(true, 'Deposit initiated.');
+            const transactionHash = await ethereum.request({
+                method: 'eth_sendTransaction',
+                params: [
+                    {
+                        from: bscAddress,
+                        to: depositAddress,
+                        value: bnbVal
+                    },
+                ],
             });
+
+            console.log(transactionHash);
+            SE.ShowToast(true, 'Deposit initiated.');
         } catch (e) {
             console.log(e.message)
         }
