@@ -166,7 +166,7 @@
                     }
 
                     if (addr.toLowerCase() == storedAddress) {
-                        SE.depositBnb(addr.toLowerCase(), amount);
+                        SE.depositBnb(addr, amount);
                         SE.HideLoading();
                     } else {
                         SE.ShowToast(false, 'Error occured while trying to deposit to your bsc address.');
@@ -176,7 +176,7 @@
                     SE.HideLoading();
                 }
             } else if (addr.toLowerCase() == knownAddr) {
-                SE.depositBnb(addr.toLowerCase(), amount);
+                SE.depositBnb(addr, amount);
                 SE.HideLoading();
             } else {
                 SE.ShowToast(false, 'Error occured while matching your bsc address.');

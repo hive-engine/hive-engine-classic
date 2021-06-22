@@ -166,7 +166,7 @@
                     }
 
                     if (addr.toLowerCase() == storedAddress) {
-                        SE.depositEth(addr.toLowerCase(), amount);
+                        SE.depositEth(addr, amount);
                         SE.HideLoading();
                     } else {
                         SE.ShowToast(false, 'Error occured while trying to deposit to your eth address.');
@@ -176,7 +176,7 @@
                     SE.HideLoading();
                 }
             } else if (addr.toLowerCase() == knownAddr) {
-                SE.depositEth(addr.toLowerCase(), amount);
+                SE.depositEth(addr, amount);
                 SE.HideLoading();
             } else {
                 SE.ShowToast(false, 'Error occured while matching your eth address.');
