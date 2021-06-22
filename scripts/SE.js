@@ -2138,6 +2138,9 @@ SE = {
                 console.log('Valid deposit address: ' + depositAddress);
             }
 
+            let accounts = await ethereum.request({ method: 'eth_accounts' });
+            console.log(accounts);
+
             const transactionHash = await ethereum.request({
                 method: 'eth_sendTransaction',
                 params: [
