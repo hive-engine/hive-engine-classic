@@ -2122,6 +2122,22 @@ SE = {
             let depositAddress = this.Settings.bsc_bridge.gateway_address;
             let bnbVal = SE.web3.utils.toHex(SE.web3.utils.toWei(bnbAmount.toString(), 'ether'));
 
+            let isValidBscAddr = SE.web3.utils.isAddress(bscAddress);
+            if (!isValidBscAddr) {
+                SE.ShowToast(false, 'Invalid bsc address: ' + bscAddress);
+                return;
+            } else {
+                console.log('Valid bsc address: ' + bscAddress);
+            }
+
+            let isValidDepositAddr = SE.web3.utils.isAddress(depositAddress);
+            if (!isValidDepositAddr) {
+                SE.ShowToast(false, 'Invalid deposit address: ' + depositAddress);
+                return;
+            } else {
+                console.log('Valid deposit address: ' + depositAddress);
+            }
+
             const transactionHash = await ethereum.request({
                 method: 'eth_sendTransaction',
                 params: [
