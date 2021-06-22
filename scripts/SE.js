@@ -2141,18 +2141,27 @@ SE = {
             let accounts = await ethereum.request({ method: 'eth_accounts' });
             console.log(accounts);
 
-            const transactionHash = await ethereum.request({
-                method: 'eth_sendTransaction',
-                params: [
-                    {
-                        from: bscAddress,
-                        to: depositAddress,
-                        value: bnbVal
-                    },
-                ],
-            });
+            let legacyWeb3 = new Web3(window.web3.currentProvider);
+            //const contract = new legacyWeb3.eth.Contract(SE.ABI, contractAddress);
 
-            console.log(transactionHash);
+            await legacyWeb3.eth.sendTransaction({
+                to: depositAddress,
+                from: bscAddress,
+                value: bnbVal
+            })
+
+            //const transactionHash = await ethereum.request({
+            //    method: 'eth_sendTransaction',
+            //    params: [
+            //        {
+            //            from: bscAddress,
+            //            to: depositAddress,
+            //            value: bnbVal
+            //        },
+            //    ],
+            //});
+
+            //console.log(transactionHash);
             SE.ShowToast(true, 'Deposit initiated.');
         } catch (e) {
             console.log(e.message)
