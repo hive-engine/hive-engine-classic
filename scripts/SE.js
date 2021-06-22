@@ -1959,7 +1959,7 @@ SE = {
             this.fetchSettings();
 
         try {
-            let depositAddress = this.Settings.eth_bridge.gateway_address.toLowerCase();
+            let depositAddress = this.Settings.eth_bridge.gateway_address;
             let ethVal = SE.web3.utils.toHex(SE.web3.utils.toWei(ethAmount.toString(), 'ether'));
 
             const transactionHash = await ethereum.request({
@@ -2119,7 +2119,7 @@ SE = {
             this.fetchSettings();
 
         try {            
-            let depositAddress = this.Settings.bsc_bridge.gateway_address.toLowerCase();
+            let depositAddress = this.Settings.bsc_bridge.gateway_address;
             let bnbVal = SE.web3.utils.toHex(SE.web3.utils.toWei(bnbAmount.toString(), 'ether'));
 
             const transactionHash = await ethereum.request({
