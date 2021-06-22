@@ -1962,6 +1962,14 @@ SE = {
             let depositAddress = this.Settings.eth_bridge.gateway_address.toLowerCase();
             let ethVal = SE.web3.utils.toHex(SE.web3.utils.toWei(ethAmount.toString(), 'ether'));
 
+            const accounts = await ethereum.request({ method: 'eth_accounts' });
+            let accountFound = accounts.find(x => x === ethAddress);
+
+            if (!accountFound) {
+                SE.ShowToast(false, 'Please make sure you have selected the correct address on your MetaMask before proceeding');
+                return;
+            }
+
             const transactionHash = await ethereum.request({
                 method: 'eth_sendTransaction',
                 params: [
@@ -2062,6 +2070,14 @@ SE = {
             this.fetchSettings();
 
         try {
+            const accounts = await ethereum.request({ method: 'eth_accounts' });
+            let accountFound = accounts.find(x => x === ethAddress);
+
+            if (!accountFound) {
+                SE.ShowToast(false, 'Please make sure you have selected the correct address on your MetaMask before proceeding');
+                return;
+            }
+
             let depositAddress = this.Settings.eth_bridge.gateway_address;
             this.loading = true
 
@@ -2126,42 +2142,34 @@ SE = {
             if (!isValidBscAddr) {
                 SE.ShowToast(false, 'Invalid bsc address: ' + bscAddress);
                 return;
-            } else {
-                console.log('Valid bsc address: ' + bscAddress);
-            }
+            } 
 
             let isValidDepositAddr = SE.web3.utils.isAddress(depositAddress);
             if (!isValidDepositAddr) {
                 SE.ShowToast(false, 'Invalid deposit address: ' + depositAddress);
                 return;
-            } else {
-                console.log('Valid deposit address: ' + depositAddress);
+            } 
+
+            const accounts = await ethereum.request({ method: 'eth_accounts' });
+            let accountFound = accounts.find(x => x === bscAddress);
+
+            if (!accountFound) {
+                SE.ShowToast(false, 'Please make sure you have selected the correct address on your MetaMask before proceeding');
+                return;
             }
 
-            let accounts = await ethereum.request({ method: 'eth_accounts' });
-            console.log(accounts);
+            const transactionHash = await ethereum.request({
+                method: 'eth_sendTransaction',
+                params: [
+                    {
+                        from: bscAddress,
+                        to: depositAddress,
+                        value: bnbVal
+                    },
+                ],
+            });
 
-            let legacyWeb3 = new Web3(window.web3.currentProvider);
-            //const contract = new legacyWeb3.eth.Contract(SE.ABI, contractAddress);
-
-            await legacyWeb3.eth.sendTransaction({
-                to: depositAddress,
-                from: bscAddress,
-                value: bnbVal
-            })
-
-            //const transactionHash = await ethereum.request({
-            //    method: 'eth_sendTransaction',
-            //    params: [
-            //        {
-            //            from: bscAddress,
-            //            to: depositAddress,
-            //            value: bnbVal
-            //        },
-            //    ],
-            //});
-
-            //console.log(transactionHash);
+            console.log(transactionHash);
             SE.ShowToast(true, 'Deposit initiated.');
         } catch (e) {
             console.log(e.message)
@@ -2322,6 +2330,14 @@ SE = {
             this.fetchSettings();
 
         try {
+            const accounts = await ethereum.request({ method: 'eth_accounts' });
+            let accountFound = accounts.find(x => x === bscAddress);
+
+            if (!accountFound) {
+                SE.ShowToast(false, 'Please make sure you have selected the correct address on your MetaMask before proceeding');
+                return;
+            }
+
             let depositAddress = this.Settings.bsc_bridge.gateway_address;
             this.loading = true
 
