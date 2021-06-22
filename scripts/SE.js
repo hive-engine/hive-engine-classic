@@ -1958,8 +1958,8 @@ SE = {
         if (!this.Settings || !this.Settings.eth_bridge)
             this.fetchSettings();
 
-        try {            
-            let depositAddress = this.Settings.eth_bridge.gateway_address;
+        try {
+            let depositAddress = this.Settings.eth_bridge.gateway_address.toLowerCase();
             let ethVal = SE.web3.utils.toHex(SE.web3.utils.toWei(ethAmount.toString(), 'ether'));
 
             const transactionHash = await ethereum.request({
@@ -2118,8 +2118,8 @@ SE = {
         if (!this.Settings || !this.Settings.bsc_bridge)
             this.fetchSettings();
 
-        try {
-            let depositAddress = this.Settings.bsc_bridge.gateway_address;
+        try {            
+            let depositAddress = this.Settings.bsc_bridge.gateway_address.toLowerCase();
             let bnbVal = SE.web3.utils.toHex(SE.web3.utils.toWei(bnbAmount.toString(), 'ether'));
 
             const transactionHash = await ethereum.request({
