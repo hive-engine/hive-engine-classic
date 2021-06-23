@@ -132,6 +132,11 @@ Config = {
             name: 'Weed',
             symbol: 'EOSWEED',
             pegged_token_symbol: 'WEED'
+        },
+        {
+            name: 'WAX',
+            symbol: 'WAX',
+            pegged_token_symbol: 'SWAP.WAX'
         }
     ]
 }

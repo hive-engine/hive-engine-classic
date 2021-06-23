@@ -1822,7 +1822,7 @@ SE = {
         if (!pegged_token)
             return;
 
-        var dataToPost = { from_coin: pegged_token.pegged_token_symbol, to_coin: symbol, destination: address };        
+        var dataToPost = { from_coin: pegged_token.pegged_token_symbol, to_coin: symbol, destination: address };
 
         $.ajax({
             url: Config.CONVERTER_API + '/convert/',
@@ -1909,34 +1909,39 @@ SE = {
         }
     },
     addUpdateEthAddressTx: async function (ethAddress, callback) {
-        let web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
-        web3.eth.defaultAccount = ethAddress;
-        data = SE.web3.utils.fromUtf8(SE.User.name);
-        let ethSig = await window.ethereum.request({
-            method: 'personal_sign',
-            params: [data, ethAddress]
-        });
+        try {
+            let web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
+            web3.eth.defaultAccount = ethAddress;
+            data = SE.web3.utils.fromUtf8(SE.User.name);
+            let ethSig = await window.ethereum.request({
+                method: 'personal_sign',
+                params: [data, ethAddress]
+            });
 
-        const memo = JSON.stringify({
-            id: this.Settings.eth_bridge.id,
-            json: {
-                ethereumAddress: ethAddress,
-                signature: ethSig
-            }
-        })
+            const memo = JSON.stringify({
+                id: this.Settings.eth_bridge.id,
+                json: {
+                    ethereumAddress: ethAddress,
+                    signature: ethSig
+                }
+            })
 
-        hive_keychain.requestTransfer(SE.User.name, this.Settings.eth_bridge.account, 0.001, memo, 'HIVE', function (response) {
-            console.log(response);
-            if (response.success && response.result) {
-                SE.ShowToast(true, 'Transaction sent successfully.');
-                if (callback)
-                    callback(null, true);
-            } else {
-                SE.ShowToast(false, 'An error occurred while updating ETH address');
-                if (callback)
-                    callback(response, null);
-            }
-        });
+            hive_keychain.requestTransfer(SE.User.name, this.Settings.eth_bridge.account, 0.001, memo, 'HIVE', function (response) {
+                console.log(response);
+                if (response.success && response.result) {
+                    SE.ShowToast(true, 'Transaction sent successfully.');
+                    if (callback)
+                        callback(null, true);
+                } else {
+                    SE.ShowToast(false, 'An error occurred while updating ETH address');
+                    if (callback)
+                        callback(response, null);
+                }
+            });
+        } catch(e) {
+            SE.ShowToast(false, e.message);
+            SE.HideLoading();
+        }
     },
 
     fetchSettings: function () {
@@ -2238,35 +2243,40 @@ SE = {
             SE.HideLoading();
         }
     },
-    addUpdateBscAddressTx: async function (bscAddress, callback) {        
-        let web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
-        web3.eth.defaultAccount = bscAddress;
-        data = SE.web3.utils.fromUtf8(SE.User.name);
-        let bscSig = await window.ethereum.request({
-            method: 'personal_sign',
-            params: [data, bscAddress]
-        });
+    addUpdateBscAddressTx: async function (bscAddress, callback) {
+        try {
+            let web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
+            web3.eth.defaultAccount = bscAddress;
+            data = SE.web3.utils.fromUtf8(SE.User.name);
+            let bscSig = await window.ethereum.request({
+                method: 'personal_sign',
+                params: [data, bscAddress]
+            });
 
-        const memo = JSON.stringify({
-            id: this.Settings.bsc_bridge.id,
-            json: {
-                bscAddress: bscAddress,
-                signature: bscSig
-            }
-        })
+            const memo = JSON.stringify({
+                id: this.Settings.bsc_bridge.id,
+                json: {
+                    bscAddress: bscAddress,
+                    signature: bscSig
+                }
+            })
 
-        hive_keychain.requestTransfer(SE.User.name, this.Settings.bsc_bridge.account, 0.001, memo, 'HIVE', function (response) {
-            console.log(response);
-            if (response.success && response.result) {
-                SE.ShowToast(true, 'Transaction sent successfully.');
-                if (callback)
-                    callback(null, true);
-            } else {
-                SE.ShowToast(false, 'An error occurred while updating BSC address');
-                if (callback)
-                    callback(response, null);
-            }
-        });
+            hive_keychain.requestTransfer(SE.User.name, this.Settings.bsc_bridge.account, 0.001, memo, 'HIVE', function (response) {
+                console.log(response);
+                if (response.success && response.result) {
+                    SE.ShowToast(true, 'Transaction sent successfully.');
+                    if (callback)
+                        callback(null, true);
+                } else {
+                    SE.ShowToast(false, 'An error occurred while updating BSC address');
+                    if (callback)
+                        callback(response, null);
+                }
+            });
+        } catch (e) {
+            SE.ShowToast(false, e.message);
+            SE.HideLoading();
+        }
     },
     fetchSupportedBEP20s: function (deposit, withdrawal, callback) {
         try {
