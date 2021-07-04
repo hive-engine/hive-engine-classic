@@ -221,14 +221,13 @@
         if (!token)
             return;
 
-        var min_withdraw = Config.MIN_WITHDRAW.find(p => p.symbol == token.symbol);
-
+        var min_withdraw = SE.Settings.minimum_withdrawals.find(x => x[0] == token.pegged_token_symbol);
         var amount = parseFloat($('#withdraw_amount').val());
 
         if (isNaN(amount) || amount <= 0 || (token.symbol != 'ERC20' && token.symbol != 'BEP20' && amount > SE.GetBalance(token.pegged_token_symbol))) {
             $('#withdraw_amount').addClass("is-invalid");
         } else {
-            if (min_withdraw && amount < min_withdraw.amount) {
+            if (min_withdraw && min_withdraw[1] && amount < min_withdraw[1]) {
                 $('#withdraw_amount').addClass("is-invalid");
             } else {
                 if ($('#withdraw_address').val() == "") {
@@ -410,11 +409,10 @@
             $("#btnBuy").show();
         }
 
-        var min_withdraw = Config.MIN_WITHDRAW.find(p => p.symbol == token.symbol);
-        
-        if (min_withdraw) {
+        var min_withdraw_record = SE.Settings.minimum_withdrawals.find(x => x[0] == token.pegged_token_symbol);        
+        if (min_withdraw_record && min_withdraw_record[1]) {
             $(".min_withdrawal_warning").show();
-            $("#min_withdraw_amt").text(min_withdraw.amount);
+            $("#min_withdraw_amt").text(min_withdraw_record[1]);
         }
         else {
             $(".min_withdrawal_warning").hide();

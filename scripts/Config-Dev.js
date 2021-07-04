@@ -13,10 +13,6 @@ Config = {
     STEEMP_ACCOUNT: 'honey-swap',
     DISABLED_TOKENS: ['BTC', 'LTC', 'STEEM', 'SBD', 'BCC', 'XAP', 'XRP', 'GOLOS', 'DISNEY', 'AMAZON', 'VOICE', 'ETH', 'EOS', 'TIME', 'DONE', 'BNB'],
     PEGGED_TOKEN: 'SWAP.HIVE',
-    MIN_WITHDRAW: [{
-        symbol: 'BTC',
-        amount: 0.01
-    }],
     PEGGED_TOKENS: [{
             name: 'Bitcoin',
             symbol: 'BTC',
