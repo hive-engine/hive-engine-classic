@@ -3,32 +3,45 @@
         <div class="modal-header" style="padding: 40px 40px 10px 60px;">
             <h1 class="modal-title" style="font-size: 38px;">
                 DEPOSIT TOKENS
-                <div class="note">There is a 1% fee on deposits and withdrawals.<br />Ethereum and Binance Smart Chain deposits have no deposit fees.</div>
+                <div class="note">There is a 1% fee on deposits and withdrawals.<br />Ethereum and Binance Smart Chain
+                    deposits have no deposit fees.</div>
             </h1>
 
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-				<span aria-hidden="true">X</span>
-			</button>
+                <span aria-hidden="true">X</span>
+            </button>
         </div>
 
         <div class="modal-body">
             <div class="note" style="text-align: left; margin-bottom: 20px;">
-                Choose which token you would like to deposit below. For more information about depositing or withdrawing external tokens to Hive Engine please <a href="/?p=faq" target="_blank">see the FAQ</a>.
+                Choose which token you would like to deposit below. For more information about depositing or withdrawing
+                external tokens to Hive Engine please <a href="/?p=faq" target="_blank">see the FAQ</a>.
+            </div>
+
+            <div class="alert alert-warning">
+                We have optimized our internal <strong>Bitcoin (BTC) wallet</strong>. As a result, all deposit addresses
+                generated
+                before <strong>July 15, 2021</strong> are invalid. We may not be able to recover funds sent to an old
+                address. Make sure you generate a
+                new address by clicking the deposit button.
             </div>
 
             <label>DEPOSIT TOKEN</label>
             <div class="input-group">
                 <select id="deposit_token">
-                    <% Config.PEGGED_TOKENS.forEach(token => { %>
-                    <option value="<%= token.symbol %>"><%= token.name %> (<%= token.symbol %>)</option>
-                    <% }); %>
+                    <% Config.PEGGED_TOKENS.forEach(token=> { %>
+                        <option value="<%= token.symbol %>">
+                            <%= token.name %> (<%= token.symbol %>)
+                        </option>
+                        <% }); %>
                 </select>
             </div>
             <div id="deposit_warning" class="alert alert-warning" style="display: none; margin-top: 10px;"></div>
         </div>
 
         <div class="modal-footer" style="padding-bottom: 0;">
-            <button id="btnBuy" type="button" class="btn btn-primary btn-lg w-100" onclick="getDepositInfoClick()">GET DEPOSIT INFO</button>
+            <button id="btnBuy" type="button" class="btn btn-primary btn-lg w-100" onclick="getDepositInfoClick()">GET
+                DEPOSIT INFO</button>
         </div>
 
         <div class="privex">
@@ -46,7 +59,7 @@
 
         $("#deposit_token").on("change", function () {
             var tokenSymbol = $('#deposit_token').val();
-            
+
             var disabledToken = SE.Settings.disabled_deposits.find(x => x.symbol == tokenSymbol);
             if (disabledToken) {
                 $("#btnBuy").hide();
@@ -87,9 +100,9 @@
                     SE.fetchEthAddress((err, result) => {
                         showEthDeposit(err, result, selectedTokenVal);
                     });
-                }                
+                }
             }
-            
+
         } else if (selectedTokenVal === 'BNB' || selectedTokenVal == 'BEP20') {
             if (window.ethereum && window.Web3) {
                 SE.web3 = new window.Web3(window.ethereum);
@@ -110,7 +123,7 @@
                         showBscDeposit(err, result, selectedTokenVal);
                     });
                 }
-            }            
+            }
         } else {
 
             SE.GetDepositAddress($('#deposit_token').val(), result => {
