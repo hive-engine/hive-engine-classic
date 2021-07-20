@@ -14,6 +14,10 @@ Config = {
     SETTINGS_API: 'https://tribaldex.com/api',
     NATIVE_TOKEN: 'BEE',
     STEEMP_ACCOUNT: 'honey-swap',
+    DSWAP_API_URL: 'https://dswap.azurewebsites.net/api',
+    DSWAP_ACCOUNT_HE: 'dswap',
+    DSWAP_HE_SOURCE_ID: '60f0880d47262b9a30fef8bf',
+    DSWAP_FRONTEND_URL: 'https://qa.dswap.trade',
     DISABLED_TOKENS: ['BTC', 'LTC', 'STEEM', 'SBD', 'HIVE', 'HBD', 'BCC', 'XAP', 'XRP', 'GOLOS', 'DISNEY', 'AMAZON', 'VOICE', 'ETH', 'EOS', 'DONE', 'BNB', 'LASSE', 'R', 'SCTR', 'ALLAH', 'ETHER', 'LTCPEG', 'SBC', 'TEST.EON', 'BEEHIVE', 'BEECASH', 'SPL.FUND', 'ATOM.TOKEN', 'DSWAP', 'LEOG', 'PAK', 'APXM', 'LBIM', 'BROAG', 'COIN.HONEY', 'CUB'],
     PEGGED_TOKEN: 'SWAP.HIVE',
     PEGGED_TOKENS: [{

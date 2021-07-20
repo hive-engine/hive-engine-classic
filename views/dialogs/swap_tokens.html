@@ -1,0 +1,292 @@
+<div class="modal-dialog modal-dialog-centered modal-lg" id="swapDialog">
+    <div class="modal-content blue">
+        <div class="modal-header" style="padding: 40px 40px 10px 60px;">
+            <h1 class="modal-title" style="font-size: 38px;">
+                SWAP TOKENS
+                <!--<div class="note">There is a 1% fee on deposits and withdrawals.<br />Ethereum and Binance Smart Chain
+                    deposits have no deposit fees.</div>-->
+            </h1>
+
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">X</span>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="note" style="text-align: left; margin-bottom: 20px;">
+                Choose which token you would like to swap below. For more information about DSwap <a href="<%= Config.DSWAP_FRONTEND_URL + '/faq' %>" target="_blank">see the FAQ</a>.
+            </div>
+
+            <label>FROM</label>
+            <div class="input-group">
+                <select style="max-width: 340px;" id="from_token" data-bind="options: fromTokenList, 
+                        optionsText: function(item) {
+                           return item.symbol() + ' (' + item.name() + ')'
+                       },
+                        value: fromToken,
+                        optionsCaption: 'Choose...'"></select>
+                <div data-bind="if: fromToken" class="ssc-cost mb-2">Current Balance: <span id="from_balance" data-bind="text: fromToken().balance"></span> <span class="ts" data-bind="text: fromToken().symbol"></span></div>
+            </div>
+
+            <div class="input-group justify-content-center align-items-center" data-bind="if: fromToken">
+                <!-- ko if: toToken -->
+                <input type="text" placeholder="0.000" id="from_amount" data-bind="value: fromAmount, valueUpdate: 'afterkeydown'">
+                <!-- /ko -->
+                <!-- ko ifnot: toToken -->
+                <input disabled="disabled" type="text" placeholder="0.000" id="from_amount">
+                <!-- /ko -->
+                <div class="input-group-append pts" id="withAppend" data-bind="text: fromToken().symbol"></div>
+                <div class="invalid-tooltip">
+                    Please enter an amount greater than 0, not more than your current balance.
+                </div>
+            </div>            
+            <br />
+
+            <div class="row justify-content-center align-items-center"><i class="fas fa-arrow-down"></i></div>
+
+            <label>TO</label>
+            <div class="input-group">
+                <select style="max-width: 340px;" id="to_token" data-bind="options: toTokenList,
+                        optionsText: function(item) {
+                           return item.symbol() + ' (' + item.name() + ')'
+                       },
+                        value: toToken,
+                        optionsCaption: 'Choose...'"></select>
+                <div data-bind="if: toToken" class="ssc-cost mb-2">Current Balance: <span id="to_balance" data-bind="text: toToken().balance"></span> <span class="ts" data-bind="text: toToken().symbol"></span></div>
+            </div>
+
+            <div data-bind="if: toToken" class="input-group justify-content-center align-items-center">
+                <!-- ko if: fromToken -->
+                <input type="text" placeholder="0.000" id="to_amount" data-bind="value: toAmount, valueUpdate: 'afterkeydown'">
+                <!-- /ko -->
+                <!-- ko ifnot: fromToken -->
+                <input disabled="disabled" type="text" placeholder="0.000" id="to_amount">
+                <!-- /ko -->
+                <div class="input-group-append pts" id="withAppend" data-bind="text: toToken().symbol"></div>
+                <div class="invalid-tooltip">
+                    Please enter an amount greater than 0, not more than your current balance.
+                </div>
+            </div>            
+
+            <div data-bind="if: enableSwap" class="swap-overview">
+                <br />
+                <label>SWAP SUMMARY</label>
+                <span data-bind="text: fromAmountThrottled() + ' ' + fromToken().symbol() + ' --> ' + toAmountThrottled() + ' ' + toToken().symbol()"></span>
+            </div>
+
+            <div data-bind="if: enableSwap" class="swap-settings">
+                <br />
+                <label>SWAP SETTINGS</label>
+                <div>
+                    Max slippage <span data-bind="text: fromToken().symbol() + ' -> SWAP.HIVE'"></span>
+                    <div class="input-group justify-content-center align-items-center">
+                        <input type="text" placeholder="0.000" id="maxSlippage1" data-bind="value: maxSlippageFromToken">
+                        <div class="input-group-append pts" id="withAppend">%</div>
+                    </div>
+                </div>
+
+                <div>
+                    Max slippage <span data-bind="text: 'SWAP.HIVE -> ' + toToken().symbol()"></span>
+                    <div class="input-group justify-content-center align-items-center">
+                        <input type="text" placeholder="0.000" id="maxSlippage2" data-bind="value: maxSlippageToToken">
+                        <div class="input-group-append pts" id="withAppend">%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="swap_warning" class="alert alert-warning" style="display: none; margin-top: 10px;"></div>
+        </div>
+
+        <div class="modal-footer" style="padding-bottom: 20px;">
+            <!-- ko if: enableSwap() -->
+            <button data-bind="click: doSwap" id="btnBuy" type="button" class="btn btn-primary btn-lg w-100">SWAP</button>
+            <!-- /ko -->
+            <!-- ko if: !enableSwap() -->
+            <button id="btnBuy" disabled="disabled" type="button" class="btn btn-primary btn-lg w-100">SWAP</button>
+            <!-- /ko -->
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    function dynamicSort(property) {
+        var sortOrder = 1;
+        if (property[0] === "-") {
+            sortOrder = -1;
+            property = property.substr(1);
+        }
+        return function (a, b) {
+            /* next line works with strings and numbers, 
+             * and you may want to customize it to your needs
+             */
+            var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+            return result * sortOrder;
+        }
+    }
+
+    function TokenItem(data) {
+        var self = this;
+
+        self.symbol = ko.observable(data.symbol);
+        self.balance = ko.observable(data.balance);
+        self.precision = ko.observable(data.precision);
+        self.name = ko.observable(data.name);        
+    }
+
+    function SwapViewModel() {
+        var self = this;
+
+        self.fromTokenList = ko.observableArray([]);
+        self.toTokenList = ko.observableArray([]);
+        self.fromToken = ko.observable();
+        self.toToken = ko.observable();
+        self.fromAmount = ko.observable();
+        self.toAmount = ko.observable();
+        self.baseTokenAmount = ko.observable();
+        self.calculateSwapOutputCalled = ko.observable(false);
+        self.calculateSwapInputCalled = ko.observable(false);
+        self.maxSlippageFromToken = ko.observable(5);
+        self.maxSlippageToToken = ko.observable(5);
+
+        self.fromAmountThrottled = ko.computed(self.fromAmount)
+            .extend({ throttle: 400 });
+
+        self.toAmountThrottled = ko.computed(self.toAmount)
+            .extend({ throttle: 400 });
+
+        self.fromToken.subscribe(function (val) {
+            self.fromAmount(0);
+            self.toAmount(0);
+        })
+
+        self.toToken.subscribe(function (val) {
+            self.fromAmount(0);
+            self.toAmount(0);
+        })
+
+        self.fromAmountThrottled.subscribe(function (val) {
+            if (val > 0 && self.fromToken() && self.toToken() && self.fromToken().symbol() != self.toToken().symbol()) {
+                // only update if from amount is changed
+                if (!self.calculateSwapInputCalled()) {
+                    var reqModel = {
+                        TokenInput: self.fromToken().symbol(),
+                        TokenInputAmount: val,
+                        TokenOutput: self.toToken().symbol(),
+                        Chain: 1
+                    };
+
+                    SE.ShowLoading();
+                    SE.DSwapCalculateSwapOutput(reqModel, (err, result) => {
+                        if (result) {
+                            self.toAmount(result.TokenOutputAmount);
+                            self.baseTokenAmount(result.BaseTokenAmount);
+                        }
+
+                        self.calculateSwapOutputCalled(true);
+
+                        SE.HideLoading();
+                    });
+                } else {
+                    self.calculateSwapInputCalled(false);
+                }
+            }
+        });
+
+        self.toAmountThrottled.subscribe(function (val) {
+            if (val > 0 && self.fromToken() && self.toToken() && self.toToken().symbol() != self.fromToken().symbol()) {
+                if (!self.calculateSwapOutputCalled()) {
+                    var reqModel = {
+                        TokenInput: self.fromToken().symbol(),
+                        TokenOutput: self.toToken().symbol(),
+                        TokenOutputAmount: val,
+                        Chain: 1
+                    };
+
+                    SE.ShowLoading();
+                    SE.DSwapCalculateSwapInput(reqModel, (err, result) => {
+                        if (result) {
+                            self.fromAmount(result.TokenInputAmount);
+                            self.baseTokenAmount(result.BaseTokenAmount);
+                        }
+
+                        self.calculateSwapInputCalled(true);
+
+                        SE.HideLoading();
+                    });
+                } else {
+                    self.calculateSwapOutputCalled(false);
+                }
+            }
+        });
+
+        self.enableSwap = ko.computed(function () {
+            let enabled = false;
+            if (self.fromAmountThrottled()
+                && self.fromAmountThrottled() > 0
+                && self.toAmountThrottled()
+                && self.toAmountThrottled() > 0
+                && self.fromToken()
+                && self.toToken()
+                && self.fromAmountThrottled() <= self.fromToken().balance()
+                && self.fromToken().symbol() != self.toToken().symbol()) {
+                enabled = true;
+            }
+
+            return enabled;
+        });
+
+        self.doSwap = function () {
+            var reqModel = {
+                Account: SE.User.name,
+                TokenInput: self.fromToken().symbol(),
+                TokenInputAmount: self.fromAmountThrottled(),
+                TokenOutput: self.toToken().symbol(),
+                TokenOutputAmount: self.toAmountThrottled(),
+                SwapSourceId: Config.DSWAP_HE_SOURCE_ID,
+                ChainTransactionId: "",
+                Chain: 1,
+                MaxSlippageInputToken: self.maxSlippageFromToken(),
+                MaxSlippageOutputToken: self.maxSlippageToToken(),
+                BaseTokenAmount: self.baseTokenAmount()
+            };
+
+            SE.DSwapSwapRequest(reqModel);
+        }
+    }
+
+    var viewModel = new SwapViewModel();
+    var element = $('#swapDialog')[0];
+    ko.cleanNode(element);
+    ko.applyBindings(viewModel, $('#swapDialog')[0]);
+
+    $(document).ready(function () {
+        viewModel.fromTokenList(SE.User.balances.sort(dynamicSort("symbol")).map(x => { return new TokenItem(x); }));
+        viewModel.toTokenList(SE.Tokens.sort(dynamicSort("symbol")).map(x => { return new TokenItem(x); }));
+
+        // update balances in toTokenList
+        for (let i = 0; i < viewModel.toTokenList().length; i++) {
+            let symbol = viewModel.toTokenList()[i].symbol();
+            var match = ko.utils.arrayFirst(viewModel.fromTokenList(), function (item) {
+                return item.symbol() == symbol;
+            });
+
+            if (match)
+                viewModel.toTokenList()[i].balance(match.balance());
+        }
+
+        // update name and precision
+        for (let i = 0; i < viewModel.fromTokenList().length; i++) {
+            let symbol = viewModel.fromTokenList()[i].symbol();
+            var match = ko.utils.arrayFirst(viewModel.toTokenList(), function (item) {
+                return item.symbol() == symbol;
+            });
+
+            if (match) {
+                viewModel.fromTokenList()[i].name(match.name());
+                viewModel.fromTokenList()[i].precision(match.precision());
+            }
+        }
+    });
+
+</script>

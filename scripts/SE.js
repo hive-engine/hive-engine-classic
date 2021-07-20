@@ -97,6 +97,9 @@ SE = {
             case 'rewards':
                 SE.ShowRewards(parts.a ? parts.a : SE.User.name);
                 break;
+            case 'swaps':
+                SE.ShowRewards(parts.a ? parts.a : SE.User.name);
+                break;
             case 'open_orders':
                 SE.ShowOpenOrders(parts.a ? parts.a : SE.User.name);
                 break;
@@ -594,6 +597,17 @@ SE = {
 
         SE.GetScotUserTokens(account, scotTokens => {
             SE.ShowHomeView('rewards', { scotTokens: scotTokens, account: account }, { a: account });
+        });
+    },
+
+    ShowSwaps: function (account) {
+        if (!account && SE.User) {
+            account = SE.User.name;
+        }
+
+        SE.DSwapGetSwapRequests(swapRequests => {
+            console.log(swapRequests);
+            SE.ShowHomeView('swaps', { swapRequests: swapRequests, account: account }, { a: account });
         });
     },
 
@@ -2435,5 +2449,145 @@ SE = {
                     console.error(error);
                 }
             });
-    }
+    },
+    ShowSwapTokens: function () {
+        SE.ShowLoading();
+        if (!SE.Tokens) {
+            SE.LoadTokens(() => SE.LoadBalances(SE.User.name, () => SE.ShowSwapTokensView()));            
+        } else {
+            if (!SE.User.balances) {
+                SE.LoadBalances(SE.User.name, () => SE.ShowSwapTokensView());
+            } else {
+                SE.ShowSwapTokensView();
+            }
+        }
+    },
+    ShowSwapTokensView: function () {
+        //SE.ShowHomeView('swap_tokens');
+        SE.ShowDialog('swap_tokens');
+        SE.HideLoading();
+    },
+    DSwapCalculateSwapOutput: function (data, callback) {
+        $.ajax({
+            url: Config.DSWAP_API_URL + '/SwapRequest/CalculateSwapOutput',
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: "application/json",
+            dataType: "json",
+            success: result => {
+                if (callback)
+                    callback(null, result);
+            },
+            error: (xhr, status, errorThrown) => {
+                callback(xhr, null);
+            }
+        });
+    },
+    DSwapCalculateSwapInput: function (data, callback) {
+        $.ajax({
+            url: Config.DSWAP_API_URL + '/SwapRequest/CalculateSwapInput',
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: "application/json",
+            dataType: "json",
+            success: result => {
+                if (callback)
+                    callback(null, result);
+            },
+            error: (xhr, status, errorThrown) => {
+                callback(xhr, null);
+            }
+        });
+    },
+    DSwapSwapRequest: function (data, callback) {
+        SE.ShowLoading();
+        var username = localStorage.getItem('username');
+        let symbol = data.TokenInput;
+        let to = Config.DSWAP_ACCOUNT_HE;
+        let quantity = data.TokenInputAmount;
+
+        if (!username) {
+            window.location.reload();
+            return;
+        }
+
+        var transaction_data = {
+            "contractName": "tokens",
+            "contractAction": "transfer",
+            "contractPayload": {
+                "symbol": symbol,
+                "to": to,
+                "quantity": quantity + '',
+                "memo": "SwapRequest"
+            }
+        };
+
+        console.log('SENDING: ' + symbol);
+
+        if (useKeychain()) {
+            hive_keychain.requestCustomJson(username, Config.CHAIN_ID, 'Active', JSON.stringify(transaction_data), 'Token Transfer: ' + symbol, function (response) {
+                if (response.success && response.result) {
+                    SE.ShowToast(true, 'Please wait while your transaction is verified. Do not close your window.');
+
+                    SE.CheckTransaction(response.result.id, 3, tx => {
+                        if (tx.success) {
+                            SE.ShowToast(true, quantity + ' ' + symbol + ' Tokens sent to @' + to + '. Please wait while we queue your Swap request.');
+
+                            data.ChainTransactionId = response.result.id;
+
+                            $.ajax({
+                                url: Config.DSWAP_API_URL + '/SwapRequest',
+                                type: 'POST',
+                                data: JSON.stringify(data),
+                                contentType: "application/json",
+                                dataType: "json",
+                                success: result => {
+                                    SE.ShowToast(true, 'Your swap request is queued successfully.');
+
+                                    console.log(result);
+                                    SE.HideLoading();
+                                    SE.HideDialog();
+
+                                    SE.ShowSwaps(SE.User.name);
+                                },
+                                error: (xhr, status, errorThrown) => {
+                                    SE.ShowToast(false, 'An error occurred while queueing your swap request.')
+                                    console.log(xhr);
+
+                                    SE.HideLoading();
+                                    SE.HideDialog();
+                                }
+                            });
+
+                        }
+                        else {
+                            SE.ShowToast(false, 'An error occurred submitting the transfer: ' + tx.error)
+
+                            SE.HideLoading();
+                            SE.HideDialog();
+                        }
+                    });
+                } else
+                    SE.HideLoading();
+            });
+        } else {
+            SE.ShowToast(false, 'Please use Hive Keychain for this operation.');
+        }
+
+    },
+    DSwapGetSwapRequests: function (callback) {
+        $.ajax({
+            url: Config.DSWAP_API_URL + '/SwapRequest?account=' + SE.User.name + "&sourceId=" + Config.DSWAP_HE_SOURCE_ID,
+            type: 'GET',
+            contentType: "application/json",
+            dataType: "json",
+            success: result => {
+                if (callback)
+                    callback(result);
+            },
+            error: (xhr, status, errorThrown) => {
+                callback(xhr);
+            }
+        });
+    },
 }

@@ -1,0 +1,75 @@
+<header>
+	<div class="row header-row">
+		<div class="col-md-6">
+			<h1>SWAP REQUESTS</h1>
+		</div>
+	</div>
+</header>
+
+<div class="container">
+    <div class="alert alert-info alert-dismissible fade show rewardWarning" role="alert">
+        For swap request details containing transactions, please go to <a href="<%= Config.DSWAP_FRONTEND_URL %>" target="_blank">DSwap website</a>.
+    </div>
+
+    <% if (data.swapRequests.length) { %>
+    <table class="table rewardsTable">
+        <thead>
+            <tr>
+                <th>Created at</th>
+                <th>From token</th>
+                <th>Amount</th>
+                <th>To token</th>
+                <th>Amount requested</th>
+                <th>Amount realized</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <% for (let req of data.swapRequests) { %>
+            <%
+
+            let swapStatus = "";
+            let swapStatusDiv = "";
+            switch (req.SwapStatusId) {
+            case 1:
+            swapStatus = "Init";
+            swapStatusDiv = "default";
+            break;
+            case 2:
+            swapStatus = "In progress";
+            swapStatusDiv = "warning";
+            break;
+            case 3:
+            swapStatus = "Success";
+            swapStatusDiv = "success";
+            break;
+            case 4:
+            swapStatus = "Failed";
+            swapStatusDiv = "danger";
+            break;
+            }
+            %>
+            <tr>
+                <td><%= req.CreatedAt %></td>
+                <td><%= req.TokenInput %></td>
+                <td><%= req.TokenInputAmount %></td>
+                <td><%= req.TokenOutput %></td>
+                <td><%= req.TokenOutputAmount %></td>
+                <td><%= req.TokenOutputAmountActual %></td>
+                <td class="text-right">
+                    <div class="alert alert-<%= swapStatusDiv %>">
+                        <%= swapStatus %>
+                    </div>
+                </td>
+            </tr>
+            <% } %>
+        </tbody>
+    </table>
+    <% } else { %>
+    <p style="color: #000; margin-top: 30px;">You have no swap requests.</p>
+    <% } %>
+</div>
+
+<script>
+
+</script>
